@@ -249,8 +249,9 @@
       if (sdkLoaded) log('✅ 準備完了');
     }
 
-    // ===== URL パラメータ ?auto=1 で自動アクティベート =====
-    if (window.location.search.indexOf('auto=1') !== -1) {
+    // ===== URL パラメータ ?auto=1 で自動アクティベート＆即時会話開始 =====
+    var autoMode = window.location.search.indexOf('auto=1') !== -1;
+    if (autoMode) {
       activatePage();
     }
 
@@ -280,8 +281,16 @@
       .then(function(module) {
         Conversation = module.Conversation;
         sdkLoaded = true;
-        log(pageActivated ? '✅ 準備完了' : '✅ SDK読み込み完了');
-        if (pageActivated) statusEl.textContent = 'ボタンを押してください';
+        if (autoMode) {
+          // ?auto=1 のときはベル→会話を即時開始
+          playAlarm();
+          setTimeout(function() {
+            if (!conversation) startConversation();
+          }, 5000);
+        } else {
+          log(pageActivated ? '✅ 準備完了' : '✅ SDK読み込み完了');
+          if (pageActivated) statusEl.textContent = 'ボタンを押してください';
+        }
       })
       .catch(function(err) { log('読み込み失敗: ' + err.message); });
 
