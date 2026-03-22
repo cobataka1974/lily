@@ -93,6 +93,59 @@
     #next-info { font-family: 'Noto Sans JP', sans-serif; font-size: 0.85rem; color: var(--gold); letter-spacing: 0.1em; opacity: 0.9; }
     .footer-ornament { font-size: 1.2rem; color: var(--gold); opacity: 0.5; letter-spacing: 0.5em; }
 
+    /* ===== スクリーンセーバー ===== */
+    #screensaver {
+      position: fixed; inset: 0; z-index: 100;
+      background: linear-gradient(135deg, #1a0a0a 0%, #2d1515 50%, #1a0a1a 100%);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 1.5s ease;
+    }
+    #screensaver.active { display: flex; }
+    #screensaver.visible { opacity: 1; }
+    #ss-clock {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 6rem; font-weight: 100;
+      color: rgba(255,220,220,0.9);
+      letter-spacing: 0.1em;
+      text-shadow: 0 0 60px rgba(201,129,106,0.6);
+      animation: ss-float 8s ease-in-out infinite;
+    }
+    #ss-date {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.6rem; font-weight: 300;
+      color: rgba(255,200,200,0.5);
+      letter-spacing: 0.3em; margin-top: 16px;
+      animation: ss-float 8s ease-in-out infinite 1s;
+    }
+    #ss-msg {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.1rem; font-weight: 300;
+      color: rgba(201,129,106,0.4);
+      letter-spacing: 0.3em; margin-top: 50px;
+      animation: ss-pulse 4s ease-in-out infinite;
+    }
+    @keyframes ss-float {
+      0%,100%{ transform: translateY(0px); }
+      50%{ transform: translateY(-14px); }
+    }
+    @keyframes ss-pulse {
+      0%,100%{ opacity: 0.2; }
+      50%{ opacity: 0.7; }
+    }
+    .petal {
+      position: fixed; pointer-events: none;
+      color: rgba(220,150,150,0.7);
+      animation: petal-fall linear infinite;
+    }
+    @keyframes petal-fall {
+      0%{ transform: translateY(-30px) rotate(0deg) translateX(0px); opacity: 0.8; }
+      25%{ transform: translateY(25vh) rotate(90deg) translateX(20px); }
+      50%{ transform: translateY(50vh) rotate(180deg) translateX(-10px); }
+      75%{ transform: translateY(75vh) rotate(270deg) translateX(15px); }
+      100%{ transform: translateY(110vh) rotate(360deg) translateX(0px); opacity: 0; }
+    }
+
     /* 初回タップバナー */
     #ready-banner {
       position: fixed; top: 0; left: 0; right: 0;
@@ -108,6 +161,13 @@
   </style>
 </head>
 <body>
+
+  <!-- スクリーンセーバー -->
+  <div id="screensaver">
+    <div id="ss-clock">00:00</div>
+    <div id="ss-date"></div>
+    <div id="ss-msg">🌸 またお話ししましょう</div>
+  </div>
 
   <div id="ready-banner" onclick="activatePage()">
     🎋 ここをタップして準備完了にする
@@ -150,7 +210,6 @@
 
   <script>
     // ===== スケジュール =====
-    // 水(3)・土(6)・日(0)：8, 11, 14, 17, 20時（3時間おき）
     var SCHEDULE = {
       0: [8,11,14,17,20],  // 日
       1: [],               // 月
@@ -169,12 +228,64 @@
     var Conversation = null;
     var sdkLoaded = false;
     var lastTriggeredKey = '';
+    var ssTimer = null;
+    var petals = [];
 
     var logEl = document.getElementById('log');
     var statusEl = document.getElementById('status');
     var btn = document.getElementById('main-btn');
+    var ss = document.getElementById('screensaver');
 
     function log(msg) { logEl.textContent = msg; console.log(msg); }
+
+    // ===== スクリーンセーバー =====
+    function showScreensaver() {
+      var now = new Date();
+      var h = String(now.getHours()).padStart(2,'0');
+      var m = String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('ss-clock').textContent = h + ':' + m;
+      document.getElementById('ss-date').textContent =
+        now.getFullYear() + '年 ' + MONTHS[now.getMonth()] + now.getDate() + '日 ' + WEEKDAYS[now.getDay()];
+
+      ss.classList.add('active');
+      setTimeout(function() { ss.classList.add('visible'); }, 50);
+
+      // 花びらを生成
+      for (var i = 0; i < 18; i++) {
+        createPetal(i * 0.8);
+      }
+
+      // スクリーンセーバー内の時計を毎分更新
+      ssTimer = setInterval(function() {
+        var n = new Date();
+        var hh = String(n.getHours()).padStart(2,'0');
+        var mm = String(n.getMinutes()).padStart(2,'0');
+        document.getElementById('ss-clock').textContent = hh + ':' + mm;
+      }, 10000);
+    }
+
+    function createPetal(delay) {
+      var p = document.createElement('div');
+      p.className = 'petal';
+      p.textContent = '🌸';
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+      p.style.animationDuration = (8 + Math.random() * 10) + 's';
+      p.style.animationDelay = delay + 's';
+      ss.appendChild(p);
+      petals.push(p);
+    }
+
+    function hideScreensaver() {
+      ss.classList.remove('visible');
+      setTimeout(function() {
+        ss.classList.remove('active');
+        // 花びらを削除
+        petals.forEach(function(p) { if (p.parentNode) p.parentNode.removeChild(p); });
+        petals = [];
+      }, 1500);
+      if (ssTimer) { clearInterval(ssTimer); ssTimer = null; }
+    }
 
     // ===== 時計・日付 =====
     function updateClock() {
@@ -249,13 +360,11 @@
       if (sdkLoaded) log('✅ 準備完了');
     }
 
-    // ===== URL パラメータ ?auto=1 で自動アクティベート＆即時会話開始 =====
+    // ===== URL パラメータ ?auto=1 =====
     var autoMode = window.location.search.indexOf('auto=1') !== -1;
-    if (autoMode) {
-      activatePage();
-    }
+    if (autoMode) { activatePage(); }
 
-    // ===== タイマーチェック（10秒ごと） =====
+    // ===== タイマーチェック =====
     function checkTimer() {
       if (!pageActivated || !sdkLoaded || conversation) return;
       var now = new Date();
@@ -266,6 +375,7 @@
           var hours = SCHEDULE[day] || [];
           if (hours.indexOf(h) !== -1) {
             lastTriggeredKey = key;
+            hideScreensaver();
             playAlarm();
             setTimeout(function() {
               if (!conversation) startConversation();
@@ -282,7 +392,7 @@
         Conversation = module.Conversation;
         sdkLoaded = true;
         if (autoMode) {
-          // ?auto=1 のときはベル→会話を即時開始
+          hideScreensaver();
           playAlarm();
           setTimeout(function() {
             if (!conversation) startConversation();
@@ -313,6 +423,7 @@
     // ===== 会話開始 =====
     async function startConversation() {
       if (!sdkLoaded) { log('もう少しお待ちください…'); return; }
+      hideScreensaver();
       setBtn('connecting');
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -322,7 +433,12 @@
           onConnect: function() { log('接続しました ✅'); setBtn('talking'); },
           onDisconnect: function() {
             log('✅ 準備完了'); conversation = null;
-            setBtn('idle'); statusEl.textContent = 'またお話ししましょう 🎋';
+            setBtn('idle');
+            statusEl.textContent = 'またお話ししましょう 🎋';
+            // 会話終了後2分でスクリーンセーバー起動
+            setTimeout(function() {
+              if (!conversation) showScreensaver();
+            }, 2 * 60 * 1000);
           },
           onError: function(err) {
             log('エラー: ' + (err.message || JSON.stringify(err)));
@@ -344,6 +460,10 @@
       setBtn('idle');
       statusEl.textContent = 'またお話ししましょう 🎋';
       log('✅ 準備完了');
+      // 手動終了後2分でスクリーンセーバー起動
+      setTimeout(function() {
+        if (!conversation) showScreensaver();
+      }, 2 * 60 * 1000);
     }
 
     function onBtnClick() {
