@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>みつこのお話し相手</title>
+  <!-- PWA -->
+  <link rel="manifest" href="/public/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="リリー">
+  <meta name="theme-color" content="#5a7a4a">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -230,6 +236,110 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
+    var agentId = '';  // /api/config から取得
+
+    // ===== リリー バックエンド連携 =====
+    var BASE_PROMPT = 'あなたはみつこさん（78歳、認知症）のお話し相手「リリー」です。\n'
+      + '・ゆっくり、短く、1文ずつ話す\n'
+      + '・1回の発言に質問は1つだけ\n'
+      + '・失敗やミスを責めない\n'
+      + '・「なつかしい」「うれしい」を引き出す話題を使う\n'
+      + '・盛り上がった話題の例：向島・もんじゃ焼き・牛島神社・コロッケ・家族との思い出\n'
+      + '・みつこさんがリリーを「お父さん」「ちゅうかさん」と呼んでも自然に応答する';
+
+    var systemPromptAddition = ''; // /api/memory から取得した追加プロンプト
+    var sessionStartTime = null;   // 会話開始時刻
+    var currentConversationId = null; // 今回の conversationId（ElevenLabs から取得）
+
+    /**
+     * 起動時に /api/memory を呼び出してシステムプロンプト追加分を取得する
+     */
+    async function loadMemory() {
+      try {
+        log('記憶を読み込み中…');
+        var res = await fetch('/api/memory');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        if (data.status === 'ok') {
+          systemPromptAddition = data.prompt_addition || '';
+          console.log('[memory] prompt_addition:', systemPromptAddition);
+          console.log('[memory] recent_hints:', data.recent_hints);
+          log(sdkLoaded ? (pageActivated ? '✅ 準備完了' : '✅ SDK読み込み完了') : '記憶を読み込みました');
+        }
+      } catch (err) {
+        console.warn('[memory] 読み込み失敗（続行します）:', err.message);
+      }
+    }
+
+    /**
+     * 会話終了時に /api/analyze へ POST してトランスクリプトを分析・保存する
+     * @param {string} conversationId - ElevenLabs の conversationId
+     */
+    async function postAnalyze(conversationId) {
+      try {
+        log('会話を分析中…');
+        var today = new Date();
+        var sessionDate = today.getFullYear() + '-'
+          + String(today.getMonth() + 1).padStart(2, '0') + '-'
+          + String(today.getDate()).padStart(2, '0');
+
+        var body = { sessionDate: sessionDate };
+        if (conversationId) {
+          body.conversationId = conversationId;
+        }
+
+        var res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          var errData = await res.json().catch(function() { return {}; });
+          throw new Error('HTTP ' + res.status + ': ' + (errData.message || ''));
+        }
+        var data = await res.json();
+        if (data.status === 'ok') {
+          console.log('[analyze] 分析完了:', data.analysis);
+          // 次回のために prompt_addition を更新
+          if (data.analysis && data.analysis.prompt_addition) {
+            systemPromptAddition = data.analysis.prompt_addition;
+          }
+          log('✅ 分析が完了しました');
+        } else {
+          throw new Error(data.message || '分析に失敗しました');
+        }
+      } catch (err) {
+        console.warn('[analyze] 分析失敗（続行します）:', err.message);
+        log('✅ 準備完了');
+      }
+    }
+
+    /**
+     * 起動時に /api/config を呼び出して agentId を取得する
+     */
+    async function loadConfig() {
+      try {
+        log('設定を読み込み中…');
+        var res = await fetch('/api/config');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        if (data.agentId) {
+          agentId = data.agentId;
+          console.log('[config] agentId 取得完了');
+        } else {
+          throw new Error('agentId が取得できませんでした');
+        }
+      } catch (err) {
+        console.error('[config] 設定の読み込みに失敗しました:', err.message);
+        log('設定の読み込みに失敗しました: ' + err.message);
+      }
+    }
+
+    // 起動時に設定とメモリを読み込む
+    (async function init() {
+      await loadConfig();
+      await loadMemory();
+    })();
 
     var logEl = document.getElementById('log');
     var statusEl = document.getElementById('status');
@@ -428,13 +538,50 @@
       try {
         await navigator.mediaDevices.getUserMedia({ audio: true });
         log('接続中…');
+
+        // システムプロンプトを組み立て（ベース + 記憶から取得した追加分）
+        var fullSystemPrompt = BASE_PROMPT;
+        if (systemPromptAddition) {
+          fullSystemPrompt += '\n\n【前回までの記憶】\n' + systemPromptAddition;
+        }
+
+        sessionStartTime = new Date();
+        currentConversationId = null;
+
+        if (!agentId) {
+          log('エラー: agentId が設定されていません');
+          setBtn('idle');
+          return;
+        }
+
         conversation = await Conversation.startSession({
-          agentId: 'agent_2901kk4fbdaaeevsakrmknmp7jz4',
-          onConnect: function() { log('接続しました ✅'); setBtn('talking'); },
+          agentId: agentId,
+          overrides: {
+            agent: {
+              prompt: {
+                prompt: fullSystemPrompt,
+              },
+            },
+          },
+          onConnect: function(props) {
+            log('接続しました ✅');
+            setBtn('talking');
+            // conversationId を取得して保持
+            if (props && props.conversationId) {
+              currentConversationId = props.conversationId;
+              console.log('[connect] conversationId:', currentConversationId);
+            }
+          },
           onDisconnect: function() {
-            log('✅ 準備完了'); conversation = null;
+            var endedConversationId = currentConversationId;
+            conversation = null;
+            currentConversationId = null;
             setBtn('idle');
             statusEl.textContent = 'またお話ししましょう 🎋';
+
+            // バックエンドへ会話分析をリクエスト
+            postAnalyze(endedConversationId);
+
             // 会話終了後2分でスクリーンセーバー起動
             setTimeout(function() {
               if (!conversation) showScreensaver();
@@ -442,7 +589,9 @@
           },
           onError: function(err) {
             log('エラー: ' + (err.message || JSON.stringify(err)));
-            conversation = null; setBtn('idle');
+            conversation = null;
+            currentConversationId = null;
+            setBtn('idle');
           },
           onModeChange: function(mode) {
             if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
@@ -456,20 +605,33 @@
     }
 
     async function stopConversation() {
-      if (conversation) { await conversation.endSession(); conversation = null; }
-      setBtn('idle');
-      statusEl.textContent = 'またお話ししましょう 🎋';
-      log('✅ 準備完了');
-      // 手動終了後2分でスクリーンセーバー起動
-      setTimeout(function() {
-        if (!conversation) showScreensaver();
-      }, 2 * 60 * 1000);
+      if (conversation) {
+        await conversation.endSession();
+        // onDisconnect が呼ばれるので、ここでは conversation をクリアしない
+      } else {
+        setBtn('idle');
+        statusEl.textContent = 'またお話ししましょう 🎋';
+        log('✅ 準備完了');
+        // 手動終了後2分でスクリーンセーバー起動
+        setTimeout(function() {
+          if (!conversation) showScreensaver();
+        }, 2 * 60 * 1000);
+      }
     }
 
     function onBtnClick() {
       if (!pageActivated) { activatePage(); return; }
       if (conversation) stopConversation();
       else startConversation();
+    }
+
+    // ===== Service Worker 登録 =====
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/public/sw.js')
+          .then(function(reg) { console.log('[SW] 登録完了:', reg.scope); })
+          .catch(function(err) { console.warn('[SW] 登録失敗:', err); });
+      });
     }
   </script>
 
