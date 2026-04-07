@@ -236,7 +236,7 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
-    var agentId = '';  // /api/config から取得
+    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID
 
     // ===== リリー バックエンド連携 =====
     var BASE_PROMPT = 'あなたはみつこさん（78歳、認知症）のお話し相手「リリー」です。\n'
@@ -317,23 +317,7 @@
     /**
      * 起動時に /api/config を呼び出して agentId を取得する
      */
-    async function loadConfig() {
-      try {
-        log('設定を読み込み中…');
-        var res = await fetch('/api/config');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        var data = await res.json();
-        if (data.agentId) {
-          agentId = data.agentId;
-          console.log('[config] agentId 取得完了');
-        } else {
-          throw new Error('agentId が取得できませんでした');
-        }
-      } catch (err) {
-        console.error('[config] 設定の読み込みに失敗しました:', err.message);
-        log('設定の読み込みに失敗しました: ' + err.message);
-      }
-    }
+    async function loadConfig() { /* agentId は直接設定済み */ }
 
     // 起動時に設定とメモリを読み込む
     (async function init() {
