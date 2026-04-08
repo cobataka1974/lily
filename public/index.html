@@ -520,7 +520,19 @@
       hideScreensaver();
       setBtn('connecting');
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
+        try {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (micErr) {
+          if (micErr.name === 'NotFoundError' || micErr.name === 'DevicesNotFoundError') {
+            log('エラー: マイクが見つかりません。マイクを接続してください。');
+          } else if (micErr.name === 'NotAllowedError' || micErr.name === 'PermissionDeniedError') {
+            log('エラー: マイクの使用が許可されていません。ブラウザの設定で許可してください。');
+          } else {
+            log('エラー: マイク取得失敗 - ' + micErr.message);
+          }
+          setBtn('idle');
+          return;
+        }
         log('接続中…');
 
         // システムプロンプトを組み立て（ベース + 記憶から取得した追加分）
