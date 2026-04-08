@@ -542,10 +542,8 @@
       if (!sdkLoaded) { log('もう少しお待ちください…'); return; }
       hideScreensaver();
       setBtn('connecting');
+      
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        log('接続中…');
-
         // システムプロンプトを組み立て（ベース + 記憶から取得した追加分）
         var fullSystemPrompt = BASE_PROMPT;
         if (systemPromptAddition) {
@@ -560,6 +558,9 @@
           setBtn('idle');
           return;
         }
+
+        log('接続中…');
+        console.log('[startConversation] Calling Conversation.startSession with agentId:', agentId);
 
         conversation = await Conversation.startSession({
           agentId: agentId,
@@ -595,6 +596,7 @@
             }, 2 * 60 * 1000);
           },
           onError: function(err) {
+            console.error('[onError]', err);
             log('エラー: ' + (err.message || JSON.stringify(err)));
             conversation = null;
             currentConversationId = null;
@@ -606,8 +608,14 @@
           }
         });
       } catch(err) {
-        log('エラー: ' + err.message); setBtn('idle');
-        if (err.name === 'NotAllowedError') statusEl.textContent = 'マイクを許可してください';
+        console.error('[startConversation catch]', err);
+        log('エラー: ' + err.message);
+        setBtn('idle');
+        if (err.name === 'NotAllowedError') {
+          statusEl.textContent = 'マイクを許可してください';
+        } else if (err.message && err.message.indexOf('device not found') !== -1) {
+          statusEl.textContent = 'マイクが見つかりません';
+        }
       }
     }
 
