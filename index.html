@@ -236,7 +236,7 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
-    var agentId = '';  // /api/config から取得
+    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID
 
     // ===== リリー バックエンド連携 =====
     var BASE_PROMPT = 'あなたはみつこさん（78歳、認知症）のお話し相手「リリー」です。\n'
@@ -316,8 +316,14 @@
 
     /**
      * 起動時に /api/config を呼び出して agentId を取得する
+     * （現在はハードコードされているため、この関数は使用されません）
      */
     async function loadConfig() {
+      // agentId はハードコード済みのため、何もしない
+      console.log('[config] agentId はハードコード済み:', agentId);
+      return;
+      
+      /* 以下は参考用に残してあります
       try {
         log('設定を読み込み中…');
         var res = await fetch('/api/config');
@@ -333,6 +339,7 @@
         console.error('[config] 設定の読み込みに失敗しました:', err.message);
         log('設定の読み込みに失敗しました: ' + err.message);
       }
+      */
     }
 
     // 起動時に設定とメモリを読み込む

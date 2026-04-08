@@ -316,8 +316,31 @@
 
     /**
      * 起動時に /api/config を呼び出して agentId を取得する
+     * （現在はハードコードされているため、この関数は使用されません）
      */
-    async function loadConfig() { /* agentId は直接設定済み */ }
+    async function loadConfig() {
+      // agentId はハードコード済みのため、何もしない
+      console.log('[config] agentId はハードコード済み:', agentId);
+      return;
+      
+      /* 以下は参考用に残してあります
+      try {
+        log('設定を読み込み中…');
+        var res = await fetch('/api/config');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        var data = await res.json();
+        if (data.agentId) {
+          agentId = data.agentId;
+          console.log('[config] agentId 取得完了');
+        } else {
+          throw new Error('agentId が取得できませんでした');
+        }
+      } catch (err) {
+        console.error('[config] 設定の読み込みに失敗しました:', err.message);
+        log('設定の読み込みに失敗しました: ' + err.message);
+      }
+      */
+    }
 
     // 起動時に設定とメモリを読み込む
     (async function init() {
@@ -481,7 +504,7 @@
     setInterval(checkTimer, 10000);
 
     // ===== SDK読み込み =====
-    import('https://esm.sh/@elevenlabs/client@1.1.2')
+    import('https://esm.sh/@elevenlabs/client')
       .then(function(module) {
         Conversation = module.Conversation;
         sdkLoaded = true;
@@ -520,19 +543,7 @@
       hideScreensaver();
       setBtn('connecting');
       try {
-        try {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (micErr) {
-          if (micErr.name === 'NotFoundError' || micErr.name === 'DevicesNotFoundError') {
-            log('エラー: マイクが見つかりません。マイクを接続してください。');
-          } else if (micErr.name === 'NotAllowedError' || micErr.name === 'PermissionDeniedError') {
-            log('エラー: マイクの使用が許可されていません。ブラウザの設定で許可してください。');
-          } else {
-            log('エラー: マイク取得失敗 - ' + micErr.message);
-          }
-          setBtn('idle');
-          return;
-        }
+        await navigator.mediaDevices.getUserMedia({ audio: true });
         log('接続中…');
 
         // システムプロンプトを組み立て（ベース + 記憶から取得した追加分）
@@ -584,18 +595,10 @@
             }, 2 * 60 * 1000);
           },
           onError: function(err) {
-            var msg = err.message || JSON.stringify(err);
-            console.error('[ElevenLabs onError]', msg, err);
+            log('エラー: ' + (err.message || JSON.stringify(err)));
             conversation = null;
             currentConversationId = null;
-            if (msg.indexOf('pc connection') !== -1 || msg.indexOf('ICE') !== -1) {
-              log('接続に失敗しました。再接続中…');
-              setBtn('connecting');
-              setTimeout(startConversation, 3000);
-            } else {
-              log('エラー: ' + msg);
-              setBtn('idle');
-            }
+            setBtn('idle');
           },
           onModeChange: function(mode) {
             if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
