@@ -481,7 +481,7 @@
     setInterval(checkTimer, 10000);
 
     // ===== SDK読み込み =====
-    import('https://esm.sh/@elevenlabs/client')
+    import('https://esm.sh/@elevenlabs/client@1.1.2')
       .then(function(module) {
         Conversation = module.Conversation;
         sdkLoaded = true;
@@ -584,10 +584,18 @@
             }, 2 * 60 * 1000);
           },
           onError: function(err) {
-            log('エラー: ' + (err.message || JSON.stringify(err)));
+            var msg = err.message || JSON.stringify(err);
+            console.error('[ElevenLabs onError]', msg, err);
             conversation = null;
             currentConversationId = null;
-            setBtn('idle');
+            if (msg.indexOf('pc connection') !== -1 || msg.indexOf('ICE') !== -1) {
+              log('接続に失敗しました。再接続中…');
+              setBtn('connecting');
+              setTimeout(startConversation, 3000);
+            } else {
+              log('エラー: ' + msg);
+              setBtn('idle');
+            }
           },
           onModeChange: function(mode) {
             if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
