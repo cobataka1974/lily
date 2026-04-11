@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>リリー ダッシュボード</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #fdf6ee;
+      color: #3d2e1e;
+      min-height: 100vh;
+    }
+
+    /* ===== ログイン画面 ===== */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(160deg, #fff8f0 0%, #fde8d8 100%);
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 8px 32px rgba(180, 100, 60, 0.12);
+      text-align: center;
+    }
+
+    .login-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #c06030;
+      margin-bottom: 6px;
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: #9a7860;
+      margin-bottom: 28px;
+    }
+
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .pin-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #d4956a;
+      background: transparent;
+      transition: background 0.15s;
+    }
+
+    .pin-dot.filled { background: #c06030; border-color: #c06030; }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .num-btn {
+      background: #fff8f3;
+      border: 1.5px solid #e8cbb4;
+      border-radius: 16px;
+      padding: 16px 0;
+      font-size: 22px;
+      font-weight: 600;
+      color: #7a4a2a;
+      cursor: pointer;
+      transition: all 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .num-btn:active, .num-btn:hover {
+      background: #ffe4cf;
+      border-color: #c06030;
+      transform: scale(0.96);
+    }
+
+    .num-btn.del { font-size: 18px; }
+    .num-btn.empty { visibility: hidden; }
+
+    .login-error {
+      margin-top: 16px;
+      color: #c04040;
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    /* ===== ダッシュボード ===== */
+    #dashboard {
+      display: none;
+      padding-bottom: 40px;
+    }
+
+    .dash-header {
+      background: linear-gradient(135deg, #c06030 0%, #e07840 100%);
+      padding: 20px 20px 24px;
+      color: white;
+    }
+
+    .dash-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .dash-title { font-size: 20px; font-weight: 700; }
+    .dash-subtitle { font-size: 12px; opacity: 0.85; }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 20px;
+      color: white;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .last-updated {
+      font-size: 11px;
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+
+    .dash-body { padding: 16px; }
+
+    /* カード */
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 12px rgba(180, 100, 60, 0.08);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c06030;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 気分サマリー */
+    .mood-summary {
+      display: flex;
+      gap: 10px;
+    }
+
+    .mood-item {
+      flex: 1;
+      text-align: center;
+      background: #fdf6ee;
+      border-radius: 14px;
+      padding: 12px 8px;
+    }
+
+    .mood-date { font-size: 10px; color: #9a7860; margin-bottom: 4px; }
+    .mood-emoji { font-size: 26px; line-height: 1; margin-bottom: 4px; }
+    .mood-label { font-size: 11px; color: #5a3e2e; font-weight: 600; }
+    .mood-reason { font-size: 10px; color: #9a7860; margin-top: 3px; line-height: 1.3; }
+
+    /* 気分グラフ */
+    .mood-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+      padding: 0 4px;
+    }
+
+    .chart-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .chart-bar {
+      width: 100%;
+      border-radius: 6px 6px 0 0;
+      transition: height 0.4s ease;
+    }
+
+    .chart-label { font-size: 9px; color: #9a7860; }
+
+    /* ハイライト */
+    .highlight-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .highlight-item {
+      background: #fdf6ee;
+      border-radius: 12px;
+      padding: 12px 14px;
+      border-left: 3px solid #e07840;
+    }
+
+    .highlight-topic {
+      font-size: 13px;
+      font-weight: 700;
+      color: #5a3e2e;
+      margin-bottom: 3px;
+    }
+
+    .highlight-reaction {
+      font-size: 12px;
+      color: #7a5a40;
+      line-height: 1.5;
+    }
+
+    .highlight-emotion {
+      display: inline-block;
+      margin-top: 6px;
+      background: #ffe4cf;
+      color: #c06030;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* 懸念事項 */
+    .concern-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0e4d8;
+    }
+
+    .concern-item:last-child { border-bottom: none; }
+
+    .severity-badge {
+      flex-shrink: 0;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .severity-high { background: #fde8e8; color: #c04040; }
+    .severity-mid  { background: #fef3e2; color: #c08020; }
+    .severity-low  { background: #e8f5e8; color: #407040; }
+
+    .concern-text { font-size: 12px; color: #5a3e2e; line-height: 1.5; }
+
+    /* ヒント */
+    .hint-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .hint-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .hint-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: #c06030;
+      color: white;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .hint-text { font-size: 12px; color: #5a3e2e; line-height: 1.6; }
+
+    /* 空状態 */
+    .empty-state {
+      text-align: center;
+      color: #b09880;
+      font-size: 13px;
+      padding: 20px 0;
+    }
+
+    /* ローディング */
+    #loading {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fdf6ee;
+    }
+
+    .spinner {
+      font-size: 40px;
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- ローディング -->
+<div id="loading"><div class="spinner">🌸</div></div>
+
+<!-- ログイン画面 -->
+<div id="login-screen" style="display:none;">
+  <div class="login-card">
+    <div class="login-icon">🌸</div>
+    <div class="login-title">リリー ダッシュボード</div>
+    <div class="login-sub">みつこさんの様子をお伝えします</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="dot0"></div>
+      <div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div>
+      <div class="pin-dot" id="dot3"></div>
+    </div>
+    <div class="numpad">
+      <button class="num-btn" onclick="enterPin('1')">1</button>
+      <button class="num-btn" onclick="enterPin('2')">2</button>
+      <button class="num-btn" onclick="enterPin('3')">3</button>
+      <button class="num-btn" onclick="enterPin('4')">4</button>
+      <button class="num-btn" onclick="enterPin('5')">5</button>
+      <button class="num-btn" onclick="enterPin('6')">6</button>
+      <button class="num-btn" onclick="enterPin('7')">7</button>
+      <button class="num-btn" onclick="enterPin('8')">8</button>
+      <button class="num-btn" onclick="enterPin('9')">9</button>
+      <button class="num-btn empty"></button>
+      <button class="num-btn" onclick="enterPin('0')">0</button>
+      <button class="num-btn del" onclick="deletePin()">⌫</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ダッシュボード -->
+<div id="dashboard">
+  <div class="dash-header">
+    <div class="dash-header-top">
+      <div>
+        <div class="dash-title">🌸 リリーの記録</div>
+        <div class="dash-subtitle">みつこさんの会話ログ</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">ログアウト</button>
+    </div>
+    <div class="last-updated" id="last-updated"></div>
+  </div>
+
+  <div class="dash-body">
+
+    <!-- 最近の気分 -->
+    <div class="card">
+      <div class="card-title">😊 最近の気分</div>
+      <div class="mood-summary" id="mood-summary">
+        <div class="empty-state">データがありません</div>
+      </div>
+    </div>
+
+    <!-- 気分の推移 -->
+    <div class="card">
+      <div class="card-title">📈 気分の推移</div>
+      <div class="mood-chart" id="mood-chart"></div>
+    </div>
+
+    <!-- 盛り上がった話題 -->
+    <div class="card">
+      <div class="card-title">✨ 盛り上がった話題（最新）</div>
+      <div class="highlight-list" id="highlight-list">
+        <div class="empty-state">データがありません</div>
+      </div>
+    </div>
+
+    <!-- 次回おすすめの話題 -->
+    <div class="card">
+      <div class="card-title">💬 次回おすすめの話題</div>
+      <div class="hint-list" id="hint-list">
+        <div class="empty-state">データがありません</div>
+      </div>
+    </div>
+
+    <!-- 気になること -->
+    <div class="card" id="concern-card">
+      <div class="card-title">⚠️ 気になること</div>
+      <div id="concern-list">
+        <div class="empty-state">特になし</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var CORRECT_PIN = '1423';
+  var SESSION_KEY = 'lily_dash_auth';
+  var pinInput = '';
+
+  // ===== 起動 =====
+  window.addEventListener('load', function() {
+    document.getElementById('loading').style.display = 'none';
+    if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
+      showDashboard();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+    }
+  });
+
+  // ===== PIN入力 =====
+  function enterPin(digit) {
+    if (pinInput.length >= 4) return;
+    pinInput += digit;
+    updateDots();
+    if (pinInput.length === 4) {
+      setTimeout(checkPin, 120);
+    }
+  }
+
+  function deletePin() {
+    pinInput = pinInput.slice(0, -1);
+    updateDots();
+    document.getElementById('login-error').textContent = '';
+  }
+
+  function updateDots() {
+    for (var i = 0; i < 4; i++) {
+      document.getElementById('dot' + i).classList.toggle('filled', i < pinInput.length);
+    }
+  }
+
+  function checkPin() {
+    if (pinInput === CORRECT_PIN) {
+      sessionStorage.setItem(SESSION_KEY, 'ok');
+      document.getElementById('login-screen').style.display = 'none';
+      showDashboard();
+    } else {
+      document.getElementById('login-error').textContent = '暗証番号が違います';
+      pinInput = '';
+      updateDots();
+      // 振動フィードバック
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    pinInput = '';
+    updateDots();
+    document.getElementById('login-error').textContent = '';
+  }
+
+  // ===== ダッシュボード表示 =====
+  function showDashboard() {
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  }
+
+  // ===== データ取得 =====
+  async function loadData() {
+    try {
+      var res = await fetch('/lily/api/sessions');
+      var data = await res.json();
+      if (data.status === 'ok' && data.sessions && data.sessions.length > 0) {
+        renderDashboard(data.sessions);
+      } else {
+        renderEmpty();
+      }
+    } catch (e) {
+      console.error('データ取得失敗:', e);
+      renderEmpty();
+    }
+  }
+
+  function renderEmpty() {
+    document.getElementById('last-updated').textContent = 'データがまだありません';
+  }
+
+  // ===== レンダリング =====
+  function moodEmoji(mood) {
+    if (!mood) return '—';
+    if (mood.includes('良')) return '😊';
+    if (mood.includes('普通')) return '😐';
+    if (mood.includes('悪')) return '😔';
+    return '😊';
+  }
+
+  function moodColor(mood) {
+    if (!mood) return '#e0d0c0';
+    if (mood.includes('良')) return '#f4a460';
+    if (mood.includes('普通')) return '#d4b896';
+    if (mood.includes('悪')) return '#c0a090';
+    return '#f4a460';
+  }
+
+  function moodHeight(mood) {
+    if (!mood) return 30;
+    if (mood.includes('良')) return 72;
+    if (mood.includes('普通')) return 44;
+    if (mood.includes('悪')) return 22;
+    return 44;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    var d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    var m = d.getMonth() + 1;
+    var day = d.getDate();
+    return m + '/' + day;
+  }
+
+  function renderDashboard(sessions) {
+    // 日付順にソート（新しい順）
+    sessions.sort(function(a, b) {
+      return new Date(b.session_date) - new Date(a.session_date);
+    });
+
+    var latest = sessions[0];
+
+    // 最終更新
+    document.getElementById('last-updated').textContent =
+      '最終更新: ' + (latest.session_date || '—');
+
+    // 最近の気分（直近3件）
+    var recent = sessions.slice(0, 3).reverse(); // 古い順に並べ直す
+    var moodHtml = recent.map(function(s) {
+      return '<div class="mood-item">'
+        + '<div class="mood-date">' + formatDate(s.session_date) + '</div>'
+        + '<div class="mood-emoji">' + moodEmoji(s.overall_mood) + '</div>'
+        + '<div class="mood-label">' + (s.overall_mood || '—') + '</div>'
+        + '<div class="mood-reason">' + (s.mood_reason || '') + '</div>'
+        + '</div>';
+    }).join('');
+    document.getElementById('mood-summary').innerHTML = moodHtml || '<div class="empty-state">データがありません</div>';
+
+    // 気分グラフ（直近10件）
+    var chartData = sessions.slice(0, 10).reverse();
+    var chartHtml = chartData.map(function(s) {
+      var h = moodHeight(s.overall_mood);
+      var c = moodColor(s.overall_mood);
+      return '<div class="chart-bar-wrap">'
+        + '<div class="chart-bar" style="height:' + h + 'px; background:' + c + ';"></div>'
+        + '<div class="chart-label">' + formatDate(s.session_date) + '</div>'
+        + '</div>';
+    }).join('');
+    document.getElementById('mood-chart').innerHTML = chartHtml || '';
+
+    // 最新セッションのハイライト
+    var highlights = latest.highlight_moments || [];
+    if (typeof highlights === 'string') {
+      try { highlights = JSON.parse(highlights); } catch(e) { highlights = []; }
+    }
+    var hlHtml = highlights.slice(0, 3).map(function(h) {
+      return '<div class="highlight-item">'
+        + '<div class="highlight-topic">🗣 ' + (h.topic || '') + '</div>'
+        + '<div class="highlight-reaction">' + (h.reaction || '') + '</div>'
+        + (h.emotion ? '<span class="highlight-emotion">' + h.emotion + '</span>' : '')
+        + '</div>';
+    }).join('');
+    document.getElementById('highlight-list').innerHTML =
+      hlHtml || '<div class="empty-state">データがありません</div>';
+
+    // 次回ヒント（直近セッションから収集）
+    var hints = [];
+    sessions.slice(0, 3).forEach(function(s) {
+      var sh = s.next_session_hints || [];
+      if (typeof sh === 'string') { try { sh = JSON.parse(sh); } catch(e) { sh = []; } }
+      sh.forEach(function(h) {
+        if (h && h.hint && hints.indexOf(h.hint) === -1) hints.push(h.hint);
+      });
+    });
+    var hintHtml = hints.slice(0, 5).map(function(hint, i) {
+      return '<div class="hint-item">'
+        + '<div class="hint-num">' + (i + 1) + '</div>'
+        + '<div class="hint-text">' + hint + '</div>'
+        + '</div>';
+    }).join('');
+    document.getElementById('hint-list').innerHTML =
+      hintHtml || '<div class="empty-state">データがありません</div>';
+
+    // 懸念事項（全セッションから高/中のみ）
+    var concerns = [];
+    sessions.slice(0, 5).forEach(function(s) {
+      var sc = s.concerns || [];
+      if (typeof sc === 'string') { try { sc = JSON.parse(sc); } catch(e) { sc = []; } }
+      sc.filter(function(c) { return c && c.severity && c.severity !== '低'; })
+        .forEach(function(c) { concerns.push(c); });
+    });
+    var concernHtml = concerns.slice(0, 5).map(function(c) {
+      var sev = c.severity || '';
+      var cls = sev === '高' ? 'severity-high' : sev === '中' ? 'severity-mid' : 'severity-low';
+      var label = sev === '高' ? '⚠️ 高' : sev === '中' ? '注意' : '低';
+      return '<div class="concern-item">'
+        + '<span class="severity-badge ' + cls + '">' + label + '</span>'
+        + '<div class="concern-text">' + (c.type || '') + '：' + (c.detail || '') + '</div>'
+        + '</div>';
+    }).join('');
+    document.getElementById('concern-list').innerHTML =
+      concernHtml || '<div class="empty-state">特になし ✨</div>';
+  }
+</script>
+</body>
+</html>

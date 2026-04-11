@@ -100,6 +100,7 @@ const configHandler     = require('./api/config.js');
 const memoryHandler     = require('./api/memory.js');
 const analyzeHandler    = require('./api/analyze.js');
 const signedUrlHandler  = require('./api/signed-url.js');
+const sessionsHandler   = require('./api/sessions.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -118,6 +119,27 @@ const server = http.createServer(async (req, res) => {
       'Access-Control-Allow-Headers': 'Content-Type',
     });
     res.end();
+    return;
+  }
+
+  // ===== GET /dashboard → dashboard.html =====
+  if (method === 'GET' && (url === '/dashboard' || url === '/dashboard/')) {
+    const filePath = path.join(ROOT, 'public', 'dashboard.html');
+    try {
+      const content = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(content);
+    } catch (e) {
+      res.writeHead(404); res.end('dashboard.html not found');
+    }
+    return;
+  }
+
+  // ===== GET /api/sessions =====
+  if (method === 'GET' && url === '/api/sessions') {
+    const wrapped = makeResWrapper(res);
+    const req2 = Object.assign(req, { method: 'GET', body: {} });
+    await sessionsHandler(req2, wrapped);
     return;
   }
 
