@@ -566,6 +566,19 @@
       if (!conversation) startConversation();
     }
 
+    // 静加の声でお知らせ
+    function playCallRing() {
+      try {
+        var audio = new Audio('/lily/public/call-ring.mp3');
+        audio.play().catch(function(e) {
+          console.warn('[call-ring] 音声再生失敗、ビープ音にフォールバック:', e.message);
+          playAlarm();
+        });
+      } catch(e) {
+        playAlarm();
+      }
+    }
+
     async function checkCallNow() {
       if (!sdkLoaded || conversation) return;
       try {
@@ -574,7 +587,7 @@
         if (data.requested) {
           console.log('[call-now] 遠隔から会話開始コマンドを受信');
           hideScreensaver();
-          playAlarm();
+          playCallRing(); // 静加の声で呼びかけ
           // タップ待ちオーバーレイを表示（iOSのマイク制限を回避）
           callOverlay.classList.add('active');
         }
