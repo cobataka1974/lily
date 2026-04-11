@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>みつこのお話し相手</title>
   <!-- PWA -->
-  <link rel="manifest" href="/public/manifest.json">
+  <link rel="manifest" href="/lily/public/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="リリー">
@@ -236,7 +236,8 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
-    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID
+    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID（フォールバック用）
+    var signedUrl = null;  // /api/signed-url から取得した wss:// URL
 
     // ===== リリー バックエンド連携 =====
     var BASE_PROMPT = 'あなたはみつこさん（78歳、認知症）のお話し相手「リリー」です。\n'
@@ -257,7 +258,7 @@
     async function loadMemory() {
       try {
         log('記憶を読み込み中…');
-        var res = await fetch('/api/memory');
+        var res = await fetch('/lily/api/memory');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
         if (data.status === 'ok') {
@@ -288,7 +289,7 @@
           body.conversationId = conversationId;
         }
 
-        var res = await fetch('/api/analyze', {
+        var res = await fetch('/lily/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -315,31 +316,26 @@
     }
 
     /**
-     * 起動時に /api/config を呼び出して agentId を取得する
-     * （現在はハードコードされているため、この関数は使用されません）
+     * 起動時に /api/signed-url を呼び出して wss:// signed URL を取得する。
+     * livekit-client の新バージョンが /rtc/v1 を要求して失敗する問題を回避するため、
+     * agentId 直接渡しではなく signed URL 経由で接続する。
      */
     async function loadConfig() {
-      // agentId はハードコード済みのため、何もしない
-      console.log('[config] agentId はハードコード済み:', agentId);
-      return;
-      
-      /* 以下は参考用に残してあります
       try {
         log('設定を読み込み中…');
-        var res = await fetch('/api/config');
+        var res = await fetch('/lily/api/signed-url');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
-        if (data.agentId) {
-          agentId = data.agentId;
-          console.log('[config] agentId 取得完了');
+        if (data.signedUrl) {
+          signedUrl = data.signedUrl;
+          console.log('[config] signedUrl 取得完了');
         } else {
-          throw new Error('agentId が取得できませんでした');
+          throw new Error('signedUrl が取得できませんでした: ' + JSON.stringify(data));
         }
       } catch (err) {
-        console.error('[config] 設定の読み込みに失敗しました:', err.message);
-        log('設定の読み込みに失敗しました: ' + err.message);
+        console.warn('[config] signed URL の取得に失敗しました（agentId でフォールバック）:', err.message);
+        signedUrl = null; // agentId フォールバックを使用
       }
-      */
     }
 
     // 起動時に設定とメモリを読み込む
@@ -553,60 +549,80 @@
         sessionStartTime = new Date();
         currentConversationId = null;
 
-        if (!agentId) {
-          log('エラー: agentId が設定されていません');
-          setBtn('idle');
-          return;
-        }
+        // 毎回新しい signed URL を取得（JWT は1回限り有効）
+        log('接続準備中…');
+        await loadConfig();
 
         log('接続中…');
-        console.log('[startConversation] Calling Conversation.startSession with agentId:', agentId);
 
-        conversation = await Conversation.startSession({
-          agentId: agentId,
-          overrides: {
-            agent: {
-              prompt: {
-                prompt: fullSystemPrompt,
+        // signedUrl が取得できていれば使用（livekit互換問題を回避）
+        // 取得失敗時は agentId フォールバック
+        var sessionParams;
+        if (signedUrl) {
+          console.log('[startConversation] signedUrl で接続します');
+          sessionParams = {
+            signedUrl: signedUrl,
+            overrides: {
+              agent: {
+                prompt: {
+                  prompt: fullSystemPrompt,
+                },
               },
             },
-          },
-          onConnect: function(props) {
-            log('接続しました ✅');
-            setBtn('talking');
-            // conversationId を取得して保持
-            if (props && props.conversationId) {
-              currentConversationId = props.conversationId;
-              console.log('[connect] conversationId:', currentConversationId);
-            }
-          },
-          onDisconnect: function() {
-            var endedConversationId = currentConversationId;
-            conversation = null;
-            currentConversationId = null;
-            setBtn('idle');
-            statusEl.textContent = 'またお話ししましょう 🎋';
+          };
+        } else {
+          console.log('[startConversation] agentId で接続します（フォールバック）:', agentId);
+          sessionParams = {
+            agentId: agentId,
+            overrides: {
+              agent: {
+                prompt: {
+                  prompt: fullSystemPrompt,
+                },
+              },
+            },
+          };
+        }
 
-            // バックエンドへ会話分析をリクエスト
-            postAnalyze(endedConversationId);
-
-            // 会話終了後2分でスクリーンセーバー起動
-            setTimeout(function() {
-              if (!conversation) showScreensaver();
-            }, 2 * 60 * 1000);
-          },
-          onError: function(err) {
-            console.error('[onError]', err);
-            log('エラー: ' + (err.message || JSON.stringify(err)));
-            conversation = null;
-            currentConversationId = null;
-            setBtn('idle');
-          },
-          onModeChange: function(mode) {
-            if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
-            else if (mode.mode === 'listening') statusEl.textContent = '🎤 聞いています…';
+        // コールバックを sessionParams にマージして startSession を呼ぶ
+        sessionParams.onConnect = function(props) {
+          log('接続しました ✅');
+          setBtn('talking');
+          // conversationId を取得して保持
+          if (props && props.conversationId) {
+            currentConversationId = props.conversationId;
+            console.log('[connect] conversationId:', currentConversationId);
           }
-        });
+        };
+        sessionParams.onDisconnect = function() {
+          var endedConversationId = currentConversationId;
+          conversation = null;
+          currentConversationId = null;
+          signedUrl = null; // 次回接続時に新しい signedUrl を取得させる
+          setBtn('idle');
+          statusEl.textContent = 'またお話ししましょう 🎋';
+
+          // バックエンドへ会話分析をリクエスト
+          postAnalyze(endedConversationId);
+
+          // 会話終了後2分でスクリーンセーバー起動
+          setTimeout(function() {
+            if (!conversation) showScreensaver();
+          }, 2 * 60 * 1000);
+        };
+        sessionParams.onError = function(err) {
+          console.error('[onError]', err);
+          log('エラー: ' + (err.message || JSON.stringify(err)));
+          conversation = null;
+          currentConversationId = null;
+          setBtn('idle');
+        };
+        sessionParams.onModeChange = function(mode) {
+          if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
+          else if (mode.mode === 'listening') statusEl.textContent = '🎤 聞いています…';
+        };
+
+        conversation = await Conversation.startSession(sessionParams);
       } catch(err) {
         console.error('[startConversation catch]', err);
         log('エラー: ' + err.message);
@@ -643,7 +659,7 @@
     // ===== Service Worker 登録 =====
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/public/sw.js')
+        navigator.serviceWorker.register('/lily/public/sw.js')
           .then(function(reg) { console.log('[SW] 登録完了:', reg.scope); })
           .catch(function(err) { console.warn('[SW] 登録失敗:', err); });
       });

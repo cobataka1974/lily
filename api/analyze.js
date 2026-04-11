@@ -3,6 +3,7 @@
 // トランスクリプト受信 → Claude分析 → data/sessions.json に保存
 
 const https = require('https');
+const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 
@@ -16,6 +17,23 @@ const DATA_FILE = path.join(process.cwd(), 'data', 'sessions.json');
 function httpsRequest(options, body) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, (res) => {
+      // 301/302リダイレクトを追跡（GASはPOSTでも302を返す）
+      if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location) {
+        const loc = res.headers.location;
+        const url = loc.startsWith('http') ? new URL(loc) : new URL('https://script.google.com' + loc);
+        const redirectOptions = {
+          hostname: url.hostname,
+          path: url.pathname + url.search,
+          method: options.method || 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+        if (body) {
+          redirectOptions.headers['Content-Length'] = Buffer.byteLength(body);
+        }
+        return httpsRequest(redirectOptions, body).then(resolve).catch(reject);
+      }
       let data = '';
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
@@ -187,6 +205,46 @@ function saveSession(analysis) {
   console.log(`[analyze] sessions.json に保存しました（合計 ${sessions.length} 件）`);
 }
 
+/**
+ * Google Apps Script経由でスプレッドシートに保存する
+ * @param {Object} analysis
+ * @param {string} transcript
+ */
+async function saveToSpreadsheet(analysis, transcript) {
+  const gasUrl = process.env.GAS_WEB_APP_URL;
+  if (!gasUrl) {
+    console.warn('[analyze] GAS_WEB_APP_URL が設定されていないため、スプレッドシート保存をスキップします');
+    return;
+  }
+
+  try {
+    const payload = JSON.stringify({
+      sessionDate: analysis.session_date,
+      transcript: transcript,
+    });
+
+    console.log('[analyze] スプレッドシートに保存中...');
+    const res = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+      redirect: 'follow',
+    });
+
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { data = text; }
+
+    if (res.ok) {
+      console.log('[analyze] スプレッドシート保存成功:', JSON.stringify(data).substring(0, 80));
+    } else {
+      console.error(`[analyze] スプレッドシート保存失敗: ${res.status} - ${String(text).substring(0, 200)}`);
+    }
+  } catch (err) {
+    console.error('[analyze] スプレッドシート保存エラー:', err.message);
+  }
+}
+
 // ===== メインハンドラ =====
 
 module.exports = async function handler(req, res) {
@@ -231,8 +289,11 @@ module.exports = async function handler(req, res) {
     // Claude で分析
     const analysis = await analyzeWithClaude(transcript, date);
 
-    // 保存
+    // ローカルJSONに保存
     saveSession(analysis);
+
+    // スプレッドシートに保存
+    await saveToSpreadsheet(analysis, transcript);
 
     console.log(`[analyze] 分析完了: ${date} / 気分: ${analysis.overall_mood}`);
     return res.status(200).json({ status: 'ok', analysis });

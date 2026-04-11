@@ -30,9 +30,8 @@ function loadEnvLocal() {
         (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
-    if (!process.env[key]) {
-      process.env[key] = val;
-    }
+    // .env.local を常に優先（システム環境変数より上書き）
+    process.env[key] = val;
   });
   console.log('[env] .env.local を読み込みました');
 }
@@ -97,13 +96,16 @@ function makeResWrapper(res) {
 }
 
 // ===== API ハンドラのキャッシュ =====
-const configHandler  = require('./api/config.js');
-const memoryHandler  = require('./api/memory.js');
-const analyzeHandler = require('./api/analyze.js');
+const configHandler     = require('./api/config.js');
+const memoryHandler     = require('./api/memory.js');
+const analyzeHandler    = require('./api/analyze.js');
+const signedUrlHandler  = require('./api/signed-url.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
-  const url = req.url.split('?')[0];
+  // /lily プレフィックスを除去（Caddy経由でも直接アクセスでも動く）
+  const rawUrl = req.url.split('?')[0];
+  const url = rawUrl.startsWith('/lily') ? rawUrl.slice(5) || '/' : rawUrl;
   const method = req.method.toUpperCase();
 
   console.log(`[${method}] ${url}`);
@@ -121,7 +123,7 @@ const server = http.createServer(async (req, res) => {
 
   // ===== GET / → index.html =====
   if (method === 'GET' && (url === '/' || url === '/index.html')) {
-    const filePath = path.join(ROOT, 'index.html');
+    const filePath = path.join(ROOT, 'public', 'index.html');
     try {
       const content = fs.readFileSync(filePath);
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -137,6 +139,14 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await configHandler(req2, wrapped);
+    return;
+  }
+
+  // ===== GET /api/signed-url =====
+  if (method === 'GET' && url === '/api/signed-url') {
+    const wrapped = makeResWrapper(res);
+    const req2 = Object.assign(req, { method: 'GET', body: {} });
+    await signedUrlHandler(req2, wrapped);
     return;
   }
 
