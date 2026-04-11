@@ -565,18 +565,23 @@
     document.getElementById('saving-text').textContent = 'ユーザーを登録中…';
 
     try {
+      // 10秒タイムアウト付きfetch
+      var controller = new AbortController();
+      var timer = setTimeout(function() { controller.abort(); }, 10000);
       var res = await fetch('/lily/api/user-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           userId:  userId,
           name:    name,
-          agentId: 'agent_2901kk4fbdaaeevsakrmknmp7jz4', // デフォルトAgent（後で変更可）
+          agentId: 'agent_2901kk4fbdaaeevsakrmknmp7jz4',
           voiceId: voiceId,
           pin:     '1234',
           prompt:  prompt,
         }),
       });
+      clearTimeout(timer);
       var data = await res.json();
       document.getElementById('saving-overlay').classList.add('hidden');
 

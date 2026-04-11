@@ -187,10 +187,14 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET /setup → setup.html =====
-  if (method === 'GET' && (url === '/setup' || url === '/setup/')) {
+  if (method === 'GET' && (url === '/setup' || url === '/setup/' || url.startsWith('/setup?'))) {
     const filePath = path.join(ROOT, 'public', 'setup.html');
     try {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      });
       res.end(fs.readFileSync(filePath));
     } catch(e) { res.writeHead(404); res.end('setup.html not found'); }
     return;
