@@ -104,6 +104,7 @@ const sessionsHandler   = require('./api/sessions.js');
 const scheduleHandler   = require('./api/schedule.js');
 const callNowHandler    = require('./api/call-now.js');
 const tokenHandler      = require('./api/token.js');
+const userConfigHandler = require('./api/user-config.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -181,6 +182,15 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await signedUrlHandler(req2, wrapped);
+    return;
+  }
+
+  // ===== GET|POST /api/user-config =====
+  if (url.startsWith('/api/user-config')) {
+    const body = method === 'POST' ? await readBody(req) : {};
+    const req2 = Object.assign(req, { method, body, url });
+    const wrapped = makeResWrapper(res);
+    await userConfigHandler(req2, wrapped);
     return;
   }
 

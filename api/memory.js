@@ -67,13 +67,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // userId をクエリパラメータから取得
+    const userId = new URL('http://x' + req.url).searchParams.get('userId') || 'default';
     const gasUrl = process.env.GAS_WEB_APP_URL;
 
     // ===== GAS から取得（優先）=====
     if (gasUrl) {
       try {
-        console.log('[memory] GAS からセッションデータを取得中...');
-        const data = await fetchFromGAS(gasUrl);
+        console.log('[memory] GAS からセッションデータを取得中... userId:', userId);
+        const data = await fetchFromGAS(gasUrl + '?action=memory&userId=' + encodeURIComponent(userId));
 
         if (data.status === 'ok') {
           console.log('[memory] GAS から取得成功。prompt_addition:', data.prompt_addition);

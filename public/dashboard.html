@@ -508,6 +508,32 @@
       cursor: pointer;
     }
 
+    /* ユーザーカード */
+    .user-item {
+      background: #fdf6ee; border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .user-info { flex: 1; }
+    .user-name { font-size: 16px; font-weight: 700; color: #5a3e2e; }
+    .user-id   { font-size: 11px; color: #b09880; margin-top: 2px; }
+    .user-url  { font-size: 11px; color: #c06030; margin-top: 4px; word-break: break-all; }
+    .user-edit-btn {
+      background: #f0e4d8; border: none; border-radius: 10px;
+      padding: 8px 14px; font-size: 12px; color: #7a4a2a; cursor: pointer;
+    }
+
+    /* ユーザーモーダル */
+    .modal-input {
+      width: 100%; padding: 12px 14px;
+      border: 2px solid #e8cbb4; border-radius: 12px;
+      font-size: 15px; color: #5a3e2e;
+      background: #fdf6ee; margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .modal-input:focus { outline: none; border-color: #c06030; }
+    .modal-input-label { font-size: 12px; font-weight: 700; color: #9a7860; margin-bottom: 4px; }
+
     /* 今すぐ会話ボタン */
     .call-now-btn {
       width: 100%;
@@ -651,6 +677,13 @@
       </div>
     </div>
 
+    <!-- ユーザー管理 -->
+    <div class="card" id="user-mgmt-card">
+      <div class="card-title">👤 ユーザー管理</div>
+      <div id="user-list" style="margin-bottom:12px;"></div>
+      <button class="schedule-add-btn" onclick="openUserModal()">＋ 新しいユーザーを追加</button>
+    </div>
+
     <!-- 今すぐ会話 -->
     <div class="card">
       <div class="card-title">📞 遠隔操作</div>
@@ -669,6 +702,29 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ユーザー追加・編集モーダル -->
+<div class="modal-overlay" id="user-modal-overlay">
+  <div class="modal">
+    <div class="modal-title">👤 ユーザー設定</div>
+    <div class="modal-input-label">ユーザーID（英数字、変更不可）</div>
+    <input class="modal-input" id="modal-user-id" type="text" placeholder="例: hanako001">
+    <div class="modal-input-label">名前</div>
+    <input class="modal-input" id="modal-user-name" type="text" placeholder="例: はなこ">
+    <div class="modal-input-label">ElevenLabs Agent ID</div>
+    <input class="modal-input" id="modal-user-agentId" type="text" placeholder="agent_xxxxxxxxx">
+    <div class="modal-input-label">Voice ID（声のクローンID）</div>
+    <input class="modal-input" id="modal-user-voiceId" type="text" placeholder="ElevenLabsのVoice ID">
+    <div class="modal-input-label">PINコード（4桁）</div>
+    <input class="modal-input" id="modal-user-pin" type="number" placeholder="1234">
+    <div class="modal-input-label">システムプロンプト（省略可）</div>
+    <textarea class="modal-input" id="modal-user-prompt" rows="3" placeholder="AIへの指示（空欄の場合はデフォルトを使用）"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeUserModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveUser()">保存</button>
+    </div>
   </div>
 </div>
 
@@ -788,7 +844,8 @@
     try {
       var res = await fetch('/lily/api/sessions');
       var data = await res.json();
-      if (data.status === 'ok' && data.sessions && data.sessions.length > 0) {
+      loadUsers();
+    if (data.status === 'ok' && data.sessions && data.sessions.length > 0) {
         renderDashboard(data.sessions);
       } else {
         renderEmpty();
@@ -931,6 +988,82 @@
     schedules = schedules.filter(function(s) { return s.id !== id; });
     await postSchedule();
     renderSchedule();
+  }
+
+  // ===== ユーザー管理 =====
+  var editingUserId = null;
+
+  async function loadUsers() {
+    try {
+      var res = await fetch('/lily/api/user-config?action=users');
+      var data = await res.json();
+      renderUsers(data.users || []);
+    } catch(e) {
+      console.warn('ユーザー一覧取得失敗:', e);
+    }
+  }
+
+  function renderUsers(users) {
+    var el = document.getElementById('user-list');
+    if (!users.length) {
+      el.innerHTML = '<div class="empty-state">ユーザーがいません</div>';
+      return;
+    }
+    el.innerHTML = users.map(function(u) {
+      var url = 'https://bvjozroi.gensparkclaw.com/lily/?id=' + encodeURIComponent(u.userId);
+      return '<div class="user-item">'
+        + '<div class="user-info">'
+        + '<div class="user-name">' + (u.name || u.userId) + 'さん</div>'
+        + '<div class="user-id">ID: ' + u.userId + '</div>'
+        + '<div class="user-url">🔗 <a href="' + url + '" target="_blank">' + url + '</a></div>'
+        + '</div>'
+        + '<button class="user-edit-btn" onclick="openUserModal(\'' + u.userId + '\')">編集</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  function openUserModal(userId) {
+    editingUserId = userId || null;
+    document.getElementById('modal-user-id').value = userId || '';
+    document.getElementById('modal-user-name').value = '';
+    document.getElementById('modal-user-agentId').value = '';
+    document.getElementById('modal-user-voiceId').value = '';
+    document.getElementById('modal-user-pin').value = '';
+    document.getElementById('modal-user-prompt').value = '';
+    document.getElementById('user-modal-overlay').classList.add('open');
+  }
+
+  function closeUserModal() {
+    document.getElementById('user-modal-overlay').classList.remove('open');
+  }
+
+  async function saveUser() {
+    var userId = document.getElementById('modal-user-id').value.trim();
+    var name   = document.getElementById('modal-user-name').value.trim();
+    var agentId = document.getElementById('modal-user-agentId').value.trim();
+    var voiceId = document.getElementById('modal-user-voiceId').value.trim();
+    var pin    = document.getElementById('modal-user-pin').value.trim();
+    var prompt = document.getElementById('modal-user-prompt').value.trim();
+
+    if (!userId || !name) { alert('IDと名前は必須です'); return; }
+
+    try {
+      var res = await fetch('/lily/api/user-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, name, agentId, voiceId, pin, prompt }),
+      });
+      var data = await res.json();
+      if (data.status === 'ok') {
+        closeUserModal();
+        loadUsers();
+        alert('保存しました！\n\nURL: https://bvjozroi.gensparkclaw.com/lily/?id=' + userId);
+      } else {
+        alert('エラー: ' + data.message);
+      }
+    } catch(e) {
+      alert('保存失敗: ' + e.message);
+    }
   }
 
   // ===== 今すぐ会話 =====
