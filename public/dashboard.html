@@ -770,16 +770,32 @@
 </div>
 
 <script>
-  var CORRECT_PIN = '1423';
+  var CORRECT_PIN = '1423'; // デフォルト（ユーザー設定から上書き）
   var DAY_NAMES = ['日','月','火','水','木','金','土'];
   var schedules = [];
   var selectedDays = [];
-  var SESSION_KEY = 'lily_dash_auth';
+  var currentUserId = new URLSearchParams(window.location.search).get('id') || 'default';
+  var SESSION_KEY = 'lily_dash_auth_' + currentUserId; // ユーザー別セッション
   var pinInput = '';
 
   // ===== 起動 =====
-  window.addEventListener('load', function() {
+  window.addEventListener('load', async function() {
     document.getElementById('loading').style.display = 'none';
+
+    // ユーザー設定からPINを取得
+    try {
+      var res = await fetch('/lily/api/user-config?userId=' + encodeURIComponent(currentUserId));
+      var data = await res.json();
+      if (data.status === 'ok' && data.pin) {
+        CORRECT_PIN = String(data.pin);
+      }
+      // ユーザー名をログイン画面に表示
+      if (data.name) {
+        var sub = document.querySelector('.login-sub');
+        if (sub) sub.textContent = data.name + 'さんの様子をお伝えします';
+      }
+    } catch(e) { /* デフォルトPIN使用 */ }
+
     if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
       showDashboard();
     } else {

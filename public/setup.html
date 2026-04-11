@@ -245,6 +245,11 @@
         <label>その他・特記事項</label>
         <textarea id="s1-memo" placeholder="例：昔は料理が得意だった、猫が好き"></textarea>
       </div>
+      <div class="field">
+        <label>ダッシュボードのPINコード（4桁）<span class="required">*</span></label>
+        <input type="number" id="s1-pin" placeholder="例：1234" maxlength="4" style="letter-spacing:0.3em;font-size:20px;">
+        <div style="font-size:11px;color:#b09880;margin-top:4px;">家族がダッシュボードにログインするための暗証番号です</div>
+      </div>
     </div>
     <div class="nav">
       <button class="btn-next" onclick="goStep(2)">次へ →</button>
@@ -560,6 +565,8 @@
     var aiName = document.getElementById('s2-ainame').value.trim();
     if (!name || !aiName) { alert('必須項目を入力してください'); return; }
 
+    var pin = String(document.getElementById('s1-pin').value).replace(/\D/g,'').slice(0,4);
+    if (!pin || pin.length < 4) { alert('PINコードを4桁で入力してください'); return; }
     var userId = generateUserId(name);
     var prompt = buildPrompt();
     var voiceId = clonedVoiceId || '2JoPnaUSkgU9bMhXXOUP'; // デフォルト=しずか
@@ -604,7 +611,7 @@
           name:    name,
           agentId: agentId,
           voiceId: voiceId,
-          pin:     '1234',
+          pin:     pin,
           prompt:  prompt,
         }),
       });
@@ -614,7 +621,11 @@
 
       if (data.status === 'ok') {
         finalUrl = 'https://bvjozroi.gensparkclaw.com/lily/?id=' + encodeURIComponent(userId);
-        document.getElementById('result-url').textContent = finalUrl;
+        var dashUrl = 'https://bvjozroi.gensparkclaw.com/lily/dashboard?id=' + encodeURIComponent(userId);
+        document.getElementById('result-url').innerHTML =
+          '🌸 会話画面：<br>' + finalUrl +
+          '<br><br>📊 ダッシュボード：<br>' + dashUrl +
+          '<br><br>🔑 PIN：' + pin;
         document.getElementById('result-card').style.display = 'block';
         document.getElementById('confirm-nav').style.display = 'none';
         document.getElementById('summary-list').insertAdjacentHTML('beforebegin',
