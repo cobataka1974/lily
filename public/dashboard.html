@@ -508,6 +508,36 @@
       cursor: pointer;
     }
 
+    /* 今すぐ会話ボタン */
+    .call-now-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #e07840 0%, #c06030 100%);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 16px rgba(192, 96, 48, 0.3);
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .call-now-btn:active { transform: scale(0.97); }
+    .call-now-btn:disabled {
+      background: #d4b896;
+      box-shadow: none;
+      cursor: default;
+    }
+    .call-now-status {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #9a7860;
+      min-height: 20px;
+    }
+
     /* 空状態 */
     .empty-state {
       text-align: center;
@@ -619,6 +649,15 @@
       <div id="concern-list">
         <div class="empty-state">特になし</div>
       </div>
+    </div>
+
+    <!-- 今すぐ会話 -->
+    <div class="card">
+      <div class="card-title">📞 遠隔操作</div>
+      <button class="call-now-btn" id="call-now-btn" onclick="callNow()">
+        🌸 今すぐ会話を始める
+      </button>
+      <div class="call-now-status" id="call-now-status"></div>
     </div>
 
     <!-- スケジュール設定 -->
@@ -892,6 +931,34 @@
     schedules = schedules.filter(function(s) { return s.id !== id; });
     await postSchedule();
     renderSchedule();
+  }
+
+  // ===== 今すぐ会話 =====
+  async function callNow() {
+    var btn = document.getElementById('call-now-btn');
+    var statusEl = document.getElementById('call-now-status');
+    btn.disabled = true;
+    btn.textContent = '⏳ 送信中…';
+    statusEl.textContent = '';
+    try {
+      var res = await fetch('/lily/api/call-now', { method: 'POST' });
+      var data = await res.json();
+      if (data.status === 'ok') {
+        btn.textContent = '✅ 送信しました！';
+        statusEl.textContent = 'みつこさんの画面でまもなく会話が始まります（最大10秒）';
+        setTimeout(function() {
+          btn.disabled = false;
+          btn.textContent = '🌸 今すぐ会話を始める';
+          statusEl.textContent = '';
+        }, 10000);
+      } else {
+        throw new Error(data.message || 'エラー');
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '🌸 今すぐ会話を始める';
+      statusEl.textContent = '⚠️ 送信に失敗しました：' + e.message;
+    }
   }
 
   async function postSchedule() {

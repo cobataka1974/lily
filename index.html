@@ -518,6 +518,26 @@
     }
     setInterval(checkTimer, 10000);
 
+    // ===== 遠隔「今すぐ会話」ポーリング =====
+    async function checkCallNow() {
+      if (!pageActivated || !sdkLoaded || conversation) return;
+      try {
+        var res = await fetch('/lily/api/call-now');
+        var data = await res.json();
+        if (data.requested) {
+          console.log('[call-now] 遠隔から会話開始コマンドを受信');
+          hideScreensaver();
+          playAlarm();
+          setTimeout(function() {
+            if (!conversation) startConversation();
+          }, 3000);
+        }
+      } catch(e) {
+        // ネットワークエラーは無視
+      }
+    }
+    setInterval(checkCallNow, 10000); // 10秒ごとにチェック
+
     // ===== SDK読み込み =====
     import('https://esm.sh/@elevenlabs/client')
       .then(function(module) {
