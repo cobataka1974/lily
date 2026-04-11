@@ -12,6 +12,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@elevenlabs/client": "^1.1.1",
     "node-fetch": "^2.7.0"
   }
 }

@@ -499,8 +499,26 @@
     }
     setInterval(checkTimer, 10000);
 
-    // ===== SDK読み込み =====
-    import('https://esm.sh/@elevenlabs/client')
+    // ===== SDK読み込み（ローカル固定版 v1.1.1 / IIFE形式）=====
+    // esm.sh の最新版は livekit-client との互換性問題があるためローカルファイルを使用
+    function loadElevenLabsSDK() {
+      return new Promise(function(resolve, reject) {
+        var script = document.createElement('script');
+        script.src = '/lily/public/elevenlabs-client.js';
+        script.onload = function() {
+          // IIFE は window.ElevenLabsClient に展開される
+          if (window.ElevenLabsClient && window.ElevenLabsClient.Conversation) {
+            resolve(window.ElevenLabsClient);
+          } else {
+            reject(new Error('ElevenLabsClient.Conversation が見つかりません'));
+          }
+        };
+        script.onerror = function() { reject(new Error('SDKファイルの読み込みに失敗しました')); };
+        document.head.appendChild(script);
+      });
+    }
+
+    loadElevenLabsSDK()
       .then(function(module) {
         Conversation = module.Conversation;
         sdkLoaded = true;
