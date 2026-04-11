@@ -411,6 +411,18 @@
       */
     }
 
+    // 起動時にマイク許可を事前取得（一度許可すれば以降は聞かれない）
+    async function prewarmMic() {
+      try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 取得したらすぐ止める（ElevenLabs SDKが改めて使う）
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        console.log('[mic] マイク事前許可取得 ✅');
+      } catch(e) {
+        console.warn('[mic] マイク事前許可失敗（後で再試行）:', e.message);
+      }
+    }
+
     // 起動時に設定・メモリ・スケジュールを読み込む
     (async function init() {
       await loadConfig();
@@ -542,6 +554,8 @@
         gain.gain.setValueAtTime(0.001, ctx.currentTime);
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
       } catch(e) {}
+      // タップのタイミングでマイク許可を事前取得
+      prewarmMic();
       statusEl.textContent = 'ボタンを押してください';
       if (sdkLoaded) log('✅ 準備完了');
     }
@@ -587,7 +601,7 @@
     // しずかの声でお知らせ（音声終了後に即会話開始）
     function playCallRing() {
       try {
-        var audio = new Audio('/lily/public/call-ring.mp3');
+        var audio = new Audio('/lily/public/call-ring-v2.mp3');
         audio.onended = function() {
           // 音声が終わったらすぐボタン画面を表示（待ち時間ゼロ）
         };
