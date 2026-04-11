@@ -161,7 +161,6 @@ function analyzeWithClaude_(transcript, sessionDate) {
   var prompt = '以下は認知症のみつこさん（78歳）とAIリリーの会話記録です。\n'
     + '以下のJSON形式で分析してください。\n\n'
     + '{\n'
-    + '  "session_date": "YYYY-MM-DD",\n'
     + '  "overall_mood": "良い／普通／悪い",\n'
     + '  "mood_reason": "一言説明",\n'
     + '  "highlight_moments": [\n'
@@ -211,7 +210,8 @@ function analyzeWithClaude_(transcript, sessionDate) {
   var jsonText = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '');
 
   var analysis = JSON.parse(jsonText);
-  analysis.session_date = analysis.session_date || sessionDate;
+  // Claude が "YYYY-MM-DD" などテンプレートをそのまま返すことがあるため強制上書き
+  analysis.session_date = sessionDate;
   return analysis;
 }
 
