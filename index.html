@@ -520,13 +520,16 @@
 
     // ===== 遠隔「今すぐ会話」ポーリング =====
     async function checkCallNow() {
-      if (!pageActivated || !sdkLoaded || conversation) return;
+      if (!sdkLoaded || conversation) return; // スクリーンセーバー中・未アクティベートでも動かす
       try {
         var res = await fetch('/lily/api/call-now');
         var data = await res.json();
         if (data.requested) {
           console.log('[call-now] 遠隔から会話開始コマンドを受信');
+          // スクリーンセーバーを消して画面をアクティベート
           hideScreensaver();
+          pageActivated = true;
+          document.getElementById('ready-banner').classList.add('hidden');
           playAlarm();
           setTimeout(function() {
             if (!conversation) startConversation();
