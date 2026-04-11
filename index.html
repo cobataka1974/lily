@@ -576,7 +576,7 @@
     var callOverlay = document.getElementById('call-overlay');
 
     function acceptCallNow() {
-      // みつこさんがタップ → マイク許可が取れる状態になる
+      // みつこさんがタップ → 即会話開始
       callOverlay.classList.remove('active');
       hideScreensaver();
       pageActivated = true;
@@ -584,16 +584,18 @@
       if (!conversation) startConversation();
     }
 
-    // 静加の声でお知らせ
+    // しずかの声でお知らせ（音声終了後に即会話開始）
     function playCallRing() {
       try {
         var audio = new Audio('/lily/public/call-ring.mp3');
+        audio.onended = function() {
+          // 音声が終わったらすぐボタン画面を表示（待ち時間ゼロ）
+        };
         audio.play().catch(function(e) {
-          console.warn('[call-ring] 音声再生失敗、ビープ音にフォールバック:', e.message);
-          playAlarm();
+          console.warn('[call-ring] 音声再生失敗:', e.message);
         });
       } catch(e) {
-        playAlarm();
+        console.warn('[call-ring] エラー:', e.message);
       }
     }
 
