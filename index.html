@@ -215,16 +215,31 @@
   </div>
 
   <script>
-    // ===== スケジュール =====
-    var SCHEDULE = {
-      0: [8,11,14,17,20],  // 日
-      1: [],               // 月
-      2: [],               // 火
-      3: [8,11,14,17,20],  // 水
-      4: [],               // 木
-      5: [],               // 金
-      6: [8,11,14,17,20],  // 土
-    };
+    // ===== スケジュール（ダッシュボードから読み込む） =====
+    var SCHEDULE = {};  // 起動時に /api/schedule から取得して上書き
+
+    async function loadSchedule() {
+      try {
+        var res = await fetch('/lily/api/schedule');
+        var data = await res.json();
+        var schedules = data.schedules || [];
+        // {days:[0-6], hour, minute, enabled} → SCHEDULE形式に変換
+        var map = {};
+        schedules.filter(function(s){ return s.enabled; }).forEach(function(s) {
+          (s.days || []).forEach(function(d) {
+            if (!map[d]) map[d] = [];
+            if (map[d].indexOf(s.hour) === -1) map[d].push(s.hour);
+          });
+        });
+        // 各曜日の時間リストをソート
+        for (var d in map) map[d].sort(function(a,b){ return a - b; });
+        SCHEDULE = map;
+        console.log('[schedule] 読み込み完了:', JSON.stringify(SCHEDULE));
+      } catch(e) {
+        console.warn('[schedule] 読み込み失敗:', e.message);
+        SCHEDULE = {};
+      }
+    }
 
     var WEEKDAYS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
     var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -342,10 +357,10 @@
       */
     }
 
-    // 起動時に設定とメモリを読み込む
+    // 起動時に設定・メモリ・スケジュールを読み込む
     (async function init() {
       await loadConfig();
-      await loadMemory();
+      await Promise.all([loadMemory(), loadSchedule()]);
     })();
 
     var logEl = document.getElementById('log');
