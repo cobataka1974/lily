@@ -1074,7 +1074,13 @@
     btn.textContent = '⏳ 送信中…';
     statusEl.textContent = '';
     try {
-      var res = await fetch('/lily/api/call-now', { method: 'POST' });
+      // 現在表示中のユーザーIDを取得（URLパラメータ or デフォルト）
+      var targetUserId = new URLSearchParams(window.location.search).get('id') || 'default';
+      var res = await fetch('/lily/api/call-now', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: targetUserId }),
+      });
       var data = await res.json();
       if (data.status === 'ok') {
         btn.textContent = '✅ 送信しました！';

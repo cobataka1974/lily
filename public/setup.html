@@ -565,10 +565,34 @@
     var voiceId = clonedVoiceId || '2JoPnaUSkgU9bMhXXOUP'; // デフォルト=しずか
 
     document.getElementById('saving-overlay').classList.add('active');
-    document.getElementById('saving-text').textContent = 'ユーザーを登録中…';
+    document.getElementById('saving-text').textContent = 'AIエージェントを作成中…（30秒ほどかかります）';
 
     try {
-      // 10秒タイムアウト付きfetch
+      // Step A: ElevenLabs Agentを自動作成
+      var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4'; // フォールバック
+      var aiName = document.getElementById('s2-ainame').value.trim();
+      try {
+        var agentRes = await fetch('/lily/api/create-agent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: userId,
+            voiceId: voiceId,
+            prompt: prompt,
+            firstMessage: aiName + 'です。こんにちは。お話しましょう。',
+          }),
+        });
+        var agentData = await agentRes.json();
+        if (agentData.status === 'ok') {
+          agentId = agentData.agentId;
+        }
+      } catch(e) {
+        console.warn('Agent作成失敗（デフォルト使用）:', e.message);
+      }
+
+      document.getElementById('saving-text').textContent = 'ユーザー情報を保存中…';
+
+      // Step B: ユーザー情報を保存
       var controller = new AbortController();
       var timer = setTimeout(function() { controller.abort(); }, 10000);
       var res = await fetch('/lily/api/user-config', {
@@ -578,7 +602,7 @@
         body: JSON.stringify({
           userId:  userId,
           name:    name,
-          agentId: 'agent_2901kk4fbdaaeevsakrmknmp7jz4',
+          agentId: agentId,
           voiceId: voiceId,
           pin:     '1234',
           prompt:  prompt,

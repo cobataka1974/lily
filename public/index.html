@@ -640,7 +640,7 @@
     async function checkCallNow() {
       if (!sdkLoaded || conversation) return;
       try {
-        var res = await fetch('/lily/api/call-now');
+        var res = await fetch('/lily/api/call-now?userId=' + encodeURIComponent(userId));
         var data = await res.json();
         if (data.requested) {
           console.log('[call-now] 遠隔から会話開始コマンドを受信');

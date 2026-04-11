@@ -106,6 +106,7 @@ const callNowHandler    = require('./api/call-now.js');
 const tokenHandler      = require('./api/token.js');
 const userConfigHandler  = require('./api/user-config.js');
 const voiceCloneHandler  = require('./api/voice-clone.js');
+const createAgentHandler = require('./api/create-agent.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -197,6 +198,15 @@ const server = http.createServer(async (req, res) => {
       });
       res.end(fs.readFileSync(filePath));
     } catch(e) { res.writeHead(404); res.end('setup.html not found'); }
+    return;
+  }
+
+  // ===== POST /api/create-agent =====
+  if (method === 'POST' && url === '/api/create-agent') {
+    const body = await readBody(req);
+    const req2 = Object.assign(req, { method, body });
+    const wrapped = makeResWrapper(res);
+    await createAgentHandler(req2, wrapped);
     return;
   }
 
