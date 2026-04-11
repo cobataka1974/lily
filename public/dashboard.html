@@ -297,6 +297,217 @@
 
     .hint-text { font-size: 12px; color: #5a3e2e; line-height: 1.6; }
 
+    /* ===== スケジュール ===== */
+    .schedule-add-btn {
+      width: 100%;
+      padding: 13px;
+      background: #c06030;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    .schedule-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .schedule-item {
+      background: #fdf6ee;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .schedule-item.disabled { opacity: 0.5; }
+
+    .schedule-toggle {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+
+    .schedule-toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #d4b896;
+      border-radius: 13px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      left: 3px; top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .schedule-toggle input:checked + .toggle-slider { background: #c06030; }
+    .schedule-toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    .schedule-info { flex: 1; min-width: 0; }
+
+    .schedule-time {
+      font-size: 22px;
+      font-weight: 700;
+      color: #5a3e2e;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .schedule-days {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .day-chip {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #ffe4cf;
+      color: #c06030;
+      font-weight: 600;
+    }
+
+    .day-chip.off { background: #f0e4d8; color: #b09880; }
+
+    .schedule-delete {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #c09080;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 28px 24px 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #c06030;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .modal-section { margin-bottom: 20px; }
+
+    .modal-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9a7860;
+      margin-bottom: 8px;
+    }
+
+    .time-picker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .time-select {
+      font-size: 28px;
+      font-weight: 700;
+      color: #5a3e2e;
+      border: 2px solid #e8cbb4;
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #fdf6ee;
+      text-align: center;
+      width: 90px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .time-sep { font-size: 28px; font-weight: 700; color: #c06030; }
+
+    .day-selector {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .day-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid #e8cbb4;
+      background: #fdf6ee;
+      font-size: 12px;
+      font-weight: 700;
+      color: #9a7860;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-btn.selected {
+      background: #c06030;
+      border-color: #c06030;
+      color: white;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 14px;
+      background: #f0e4d8;
+      color: #9a7860;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      flex: 2;
+      padding: 14px;
+      background: #c06030;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     /* 空状態 */
     .empty-state {
       text-align: center;
@@ -410,11 +621,64 @@
       </div>
     </div>
 
+    <!-- スケジュール設定 -->
+    <div class="card">
+      <div class="card-title">⏰ 会話スケジュール</div>
+      <button class="schedule-add-btn" onclick="openModal()">＋ スケジュールを追加</button>
+      <div class="schedule-list" id="schedule-list">
+        <div class="empty-state">スケジュールがありません</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- スケジュール追加モーダル -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">⏰ スケジュールを設定</div>
+
+    <div class="modal-section">
+      <div class="modal-label">時間</div>
+      <div class="time-picker">
+        <select class="time-select" id="modal-hour">
+          <script>for(var i=0;i<24;i++){document.write('<option value="'+i+'"'+(i===10?' selected':'')+'>'+String(i).padStart(2,'0')+'</option>');}</script>
+        </select>
+        <span class="time-sep">:</span>
+        <select class="time-select" id="modal-minute">
+          <option value="0" selected>00</option>
+          <option value="15">15</option>
+          <option value="30">30</option>
+          <option value="45">45</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">曜日</div>
+      <div class="day-selector">
+        <button class="day-btn" data-day="1">月</button>
+        <button class="day-btn" data-day="2">火</button>
+        <button class="day-btn" data-day="3">水</button>
+        <button class="day-btn" data-day="4">木</button>
+        <button class="day-btn" data-day="5">金</button>
+        <button class="day-btn" data-day="6">土</button>
+        <button class="day-btn" data-day="0">日</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-save" onclick="saveSchedule()">保存</button>
+    </div>
   </div>
 </div>
 
 <script>
   var CORRECT_PIN = '1423';
+  var DAY_NAMES = ['日','月','火','水','木','金','土'];
+  var schedules = [];
+  var selectedDays = [];
   var SESSION_KEY = 'lily_dash_auth';
   var pinInput = '';
 
@@ -477,6 +741,7 @@
   function showDashboard() {
     document.getElementById('dashboard').style.display = 'block';
     loadData();
+    loadScheduleData();
   }
 
   // ===== データ取得 =====
@@ -532,6 +797,119 @@
     var day = d.getDate();
     return m + '/' + day;
   }
+
+  // ===== スケジュール =====
+  async function loadScheduleData() {
+    try {
+      var res = await fetch('/lily/api/schedule');
+      var data = await res.json();
+      schedules = data.schedules || [];
+      renderSchedule();
+    } catch(e) {
+      console.warn('スケジュール取得失敗:', e);
+    }
+  }
+
+  function renderSchedule() {
+    var el = document.getElementById('schedule-list');
+    if (schedules.length === 0) {
+      el.innerHTML = '<div class="empty-state">スケジュールがありません</div>';
+      return;
+    }
+    // 時間順にソート
+    var sorted = schedules.slice().sort(function(a, b) {
+      return (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute);
+    });
+    el.innerHTML = sorted.map(function(s) {
+      var timeStr = String(s.hour).padStart(2,'0') + ':' + String(s.minute || 0).padStart(2,'0');
+      var dayChips = DAY_NAMES.map(function(n, i) {
+        var on = (s.days || []).indexOf(i) !== -1;
+        return '<span class="day-chip' + (on ? '' : ' off') + '">' + n + '</span>';
+      }).join('');
+      return '<div class="schedule-item' + (s.enabled ? '' : ' disabled') + '" data-id="' + s.id + '">'
+        + '<label class="schedule-toggle">'
+        + '<input type="checkbox"' + (s.enabled ? ' checked' : '') + ' onchange="toggleSchedule(\'' + s.id + '\')">'
+        + '<span class="toggle-slider"></span>'
+        + '</label>'
+        + '<div class="schedule-info">'
+        + '<div class="schedule-time">' + timeStr + '</div>'
+        + '<div class="schedule-days">' + dayChips + '</div>'
+        + '</div>'
+        + '<button class="schedule-delete" onclick="deleteSchedule(\'' + s.id + '\')">🗑</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  function openModal() {
+    selectedDays = [1,2,3,4,5]; // 平日をデフォルト選択
+    document.querySelectorAll('.day-btn').forEach(function(btn) {
+      var d = parseInt(btn.dataset.day);
+      btn.classList.toggle('selected', selectedDays.indexOf(d) !== -1);
+      btn.onclick = function() {
+        var idx = selectedDays.indexOf(d);
+        if (idx === -1) { selectedDays.push(d); btn.classList.add('selected'); }
+        else { selectedDays.splice(idx, 1); btn.classList.remove('selected'); }
+      };
+    });
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  async function saveSchedule() {
+    var hour   = parseInt(document.getElementById('modal-hour').value);
+    var minute = parseInt(document.getElementById('modal-minute').value);
+    if (selectedDays.length === 0) {
+      alert('曜日を1つ以上選択してください');
+      return;
+    }
+    var newItem = {
+      id: 'sch_' + Date.now(),
+      hour: hour,
+      minute: minute,
+      days: selectedDays.slice(),
+      enabled: true,
+    };
+    schedules.push(newItem);
+    await postSchedule();
+    renderSchedule();
+    closeModal();
+  }
+
+  async function toggleSchedule(id) {
+    schedules = schedules.map(function(s) {
+      if (s.id === id) return Object.assign({}, s, { enabled: !s.enabled });
+      return s;
+    });
+    await postSchedule();
+    renderSchedule();
+  }
+
+  async function deleteSchedule(id) {
+    if (!confirm('このスケジュールを削除しますか？')) return;
+    schedules = schedules.filter(function(s) { return s.id !== id; });
+    await postSchedule();
+    renderSchedule();
+  }
+
+  async function postSchedule() {
+    try {
+      await fetch('/lily/api/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ schedules: schedules }),
+      });
+    } catch(e) {
+      console.error('スケジュール保存失敗:', e);
+    }
+  }
+
+  // モーダル外タップで閉じる
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
 
   function renderDashboard(sessions) {
     // 日付順にソート（新しい順）

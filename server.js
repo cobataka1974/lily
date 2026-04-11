@@ -101,6 +101,7 @@ const memoryHandler     = require('./api/memory.js');
 const analyzeHandler    = require('./api/analyze.js');
 const signedUrlHandler  = require('./api/signed-url.js');
 const sessionsHandler   = require('./api/sessions.js');
+const scheduleHandler   = require('./api/schedule.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -140,6 +141,15 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await sessionsHandler(req2, wrapped);
+    return;
+  }
+
+  // ===== GET|POST /api/schedule =====
+  if (url === '/api/schedule') {
+    const body = method === 'POST' ? await readBody(req) : {};
+    const req2 = Object.assign(req, { method, body });
+    const wrapped = makeResWrapper(res);
+    await scheduleHandler(req2, wrapped);
     return;
   }
 
