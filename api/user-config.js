@@ -1,57 +1,90 @@
 // api/user-config.js
-// GET  /api/user-config?userId=xxx  → ユーザー設定取得（agentId, voiceId, name, prompt）
-// GET  /api/user-config?action=users → 全ユーザー一覧
-// POST /api/user-config              → ユーザー新規作成・更新
+// GASが利用可能ならGAS優先、利用不可ならローカルJSON(data/users.json)で管理
 
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
-function fetchFromGAS(gasUrl, params) {
+const USERS_FILE = path.join(process.cwd(), 'data', 'users.json');
+
+// ===== ローカルJSON操作 =====
+function loadUsers() {
+  if (!fs.existsSync(USERS_FILE)) return [];
+  try { return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8')); } catch(e) { return []; }
+}
+
+function saveUsers(users) {
+  const dir = path.dirname(USERS_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
+}
+
+function getLocalUser(userId) {
+  return loadUsers().find(u => u.userId === userId) || null;
+}
+
+function saveLocalUser(payload) {
+  const users = loadUsers();
+  const idx = users.findIndex(u => u.userId === payload.userId);
+  const entry = {
+    userId:           payload.userId,
+    name:             payload.name || '',
+    agentId:          payload.agentId || '',
+    voiceId:          payload.voiceId || '',
+    sessionSheetName: payload.sessionSheetName || ('セッション_' + payload.userId),
+    pin:              payload.pin || '1234',
+    prompt:           payload.prompt || '',
+  };
+  if (idx >= 0) { users[idx] = entry; } else { users.push(entry); }
+  saveUsers(users);
+  return { status: 'ok', action: idx >= 0 ? 'updated' : 'created', userId: payload.userId };
+}
+
+// ===== GAS通信 =====
+function fetchFromGAS(url) {
   return new Promise((resolve, reject) => {
-    const url = new URL(gasUrl);
-    if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-
-    function doRequest(opts) {
-      const req = https.request(opts, (res) => {
+    const u = new URL(url);
+    function doReq(opts) {
+      const req = https.request(opts, res => {
         if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location) {
           const loc = res.headers.location;
           const r = loc.startsWith('http') ? new URL(loc) : new URL('https://script.google.com' + loc);
-          return doRequest({ hostname: r.hostname, path: r.pathname + r.search, method: 'GET', headers: {} });
+          return doReq({ hostname: r.hostname, path: r.pathname + r.search, method: 'GET', headers: {} });
         }
-        let data = '';
-        res.on('data', c => { data += c; });
-        res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(new Error('Parse error: ' + data.slice(0, 100))); } });
+        let d = '';
+        res.on('data', c => { d += c; });
+        res.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(new Error('GAS parse error')); } });
       });
       req.on('error', reject);
       req.end();
     }
-    doRequest({ hostname: url.hostname, path: url.pathname + url.search, method: 'GET', headers: {} });
+    doReq({ hostname: u.hostname, path: u.pathname + u.search, method: 'GET', headers: {} });
   });
 }
 
 function postToGAS(gasUrl, body) {
   return new Promise((resolve, reject) => {
-    const url = new URL(gasUrl);
     const payload = JSON.stringify(body);
-
-    function doRequest(opts, data) {
-      const req = https.request(opts, (res) => {
+    const u = new URL(gasUrl);
+    function doReq(opts, data) {
+      const req = https.request(opts, res => {
         if ((res.statusCode === 301 || res.statusCode === 302) && res.headers.location) {
           const loc = res.headers.location;
           const r = loc.startsWith('http') ? new URL(loc) : new URL('https://script.google.com' + loc);
-          return doRequest({ hostname: r.hostname, path: r.pathname + r.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, data);
+          return doReq({ hostname: r.hostname, path: r.pathname + r.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, data);
         }
         let d = '';
         res.on('data', c => { d += c; });
-        res.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(new Error('Parse error')); } });
+        res.on('end', () => { try { resolve(JSON.parse(d)); } catch(e) { reject(new Error('GAS parse error')); } });
       });
       req.on('error', reject);
-      req.write(data);
-      req.end();
+      req.write(data); req.end();
     }
-    doRequest({ hostname: url.hostname, path: url.pathname + url.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } }, payload);
+    doReq({ hostname: u.hostname, path: u.pathname + u.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } }, payload);
   });
 }
 
+// ===== メインハンドラ =====
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -59,29 +92,48 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const gasUrl = process.env.GAS_WEB_APP_URL;
-  if (!gasUrl) return res.status(500).json({ status: 'error', message: 'GAS_WEB_APP_URL未設定' });
 
-  // GET: ユーザー設定取得
+  // ===== GET =====
   if (req.method === 'GET') {
-    const action = req.query?.action || (req.url.includes('action=users') ? 'users' : 'user');
-    const userId = req.query?.userId || new URL('http://x' + req.url).searchParams.get('userId') || 'default';
-    try {
-      const data = await fetchFromGAS(gasUrl, action === 'users' ? { action: 'users' } : { action: 'user', userId });
-      return res.status(200).json(data);
-    } catch(e) {
-      return res.status(500).json({ status: 'error', message: e.message });
+    const params = new URL('http://x' + req.url).searchParams;
+    const action = params.get('action') || 'user';
+    const userId = params.get('userId') || 'default';
+
+    // 全ユーザー一覧
+    if (action === 'users') {
+      const users = loadUsers();
+      return res.status(200).json({ status: 'ok', users });
     }
+
+    // ユーザー設定取得：ローカル優先
+    const local = getLocalUser(userId);
+    if (local) return res.status(200).json({ status: 'ok', ...local });
+
+    // GASから試みる
+    if (gasUrl) {
+      try {
+        const data = await fetchFromGAS(gasUrl + '?action=user&userId=' + encodeURIComponent(userId));
+        if (data.status === 'ok') return res.status(200).json(data);
+      } catch(e) { /* フォールバック */ }
+    }
+    return res.status(200).json({ status: 'error', message: 'ユーザーが見つかりません' });
   }
 
-  // POST: ユーザー保存
+  // ===== POST =====
   if (req.method === 'POST') {
     const body = req.body || {};
-    try {
-      const data = await postToGAS(gasUrl, { action: 'saveUser', ...body });
-      return res.status(200).json(data);
-    } catch(e) {
-      return res.status(500).json({ status: 'error', message: e.message });
+    // ローカルに必ず保存
+    const result = saveLocalUser(body);
+    console.log('[user-config] ローカル保存:', body.userId, result.action);
+
+    // GASにも非同期で保存（失敗しても無視）
+    if (gasUrl) {
+      postToGAS(gasUrl, { action: 'saveUser', ...body })
+        .then(d => console.log('[user-config] GAS保存:', d.status))
+        .catch(e => console.warn('[user-config] GAS保存失敗（ローカルは保存済み）:', e.message));
     }
+
+    return res.status(200).json(result);
   }
 
   return res.status(405).json({ status: 'error', message: 'Method not allowed' });
