@@ -164,6 +164,35 @@
     }
     #ready-banner.hidden { display: none; }
     @keyframes slideDown { from{transform:translateY(-100%)} to{transform:translateY(0)} }
+
+    /* 遠隔呼び出しタップ画面 */
+    #call-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 150;
+      background: rgba(201,129,106,0.95);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 28px;
+      animation: fadeIn 0.4s ease;
+    }
+    #call-overlay.active { display: flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    #call-overlay-emoji { font-size: 5rem; animation: bounce 1s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+    #call-overlay-msg {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.8rem; font-weight: 400;
+      color: white; letter-spacing: 0.15em; text-align: center;
+    }
+    #call-overlay-btn {
+      background: white; color: var(--sakura);
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.4rem; font-weight: 500;
+      border: none; border-radius: 50px;
+      padding: 20px 48px; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      letter-spacing: 0.1em;
+    }
   </style>
 </head>
 <body>
@@ -177,6 +206,13 @@
 
   <div id="ready-banner" onclick="activatePage()">
     🎋 ここをタップして準備完了にする
+  </div>
+
+  <!-- 遠隔呼び出しオーバーレイ -->
+  <div id="call-overlay">
+    <div id="call-overlay-emoji">🌸</div>
+    <div id="call-overlay-msg">リリーからお電話です</div>
+    <button id="call-overlay-btn" onclick="acceptCallNow()">タップして話す</button>
   </div>
 
   <div class="leaf leaf-1">
@@ -519,21 +555,28 @@
     setInterval(checkTimer, 10000);
 
     // ===== 遠隔「今すぐ会話」ポーリング =====
+    var callOverlay = document.getElementById('call-overlay');
+
+    function acceptCallNow() {
+      // みつこさんがタップ → マイク許可が取れる状態になる
+      callOverlay.classList.remove('active');
+      hideScreensaver();
+      pageActivated = true;
+      document.getElementById('ready-banner').classList.add('hidden');
+      if (!conversation) startConversation();
+    }
+
     async function checkCallNow() {
-      if (!sdkLoaded || conversation) return; // スクリーンセーバー中・未アクティベートでも動かす
+      if (!sdkLoaded || conversation) return;
       try {
         var res = await fetch('/lily/api/call-now');
         var data = await res.json();
         if (data.requested) {
           console.log('[call-now] 遠隔から会話開始コマンドを受信');
-          // スクリーンセーバーを消して画面をアクティベート
           hideScreensaver();
-          pageActivated = true;
-          document.getElementById('ready-banner').classList.add('hidden');
           playAlarm();
-          setTimeout(function() {
-            if (!conversation) startConversation();
-          }, 3000);
+          // タップ待ちオーバーレイを表示（iOSのマイク制限を回避）
+          callOverlay.classList.add('active');
         }
       } catch(e) {
         // ネットワークエラーは無視
