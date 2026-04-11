@@ -170,8 +170,11 @@
     .hidden { display: none; }
     .saving-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center;
+      display: none; align-items: center; justify-content: center;
       z-index: 100;
+    }
+    .saving-overlay.active {
+      display: flex;
     }
     .saving-box {
       background: white; border-radius: 20px;
@@ -561,7 +564,7 @@
     var prompt = buildPrompt();
     var voiceId = clonedVoiceId || '2JoPnaUSkgU9bMhXXOUP'; // デフォルト=しずか
 
-    document.getElementById('saving-overlay').classList.remove('hidden');
+    document.getElementById('saving-overlay').classList.add('active');
     document.getElementById('saving-text').textContent = 'ユーザーを登録中…';
 
     try {
@@ -583,7 +586,7 @@
       });
       clearTimeout(timer);
       var data = await res.json();
-      document.getElementById('saving-overlay').classList.add('hidden');
+      document.getElementById('saving-overlay').classList.remove('active');
 
       if (data.status === 'ok') {
         finalUrl = 'https://bvjozroi.gensparkclaw.com/lily/?id=' + encodeURIComponent(userId);
@@ -596,7 +599,7 @@
         alert('保存に失敗しました: ' + data.message);
       }
     } catch(e) {
-      document.getElementById('saving-overlay').classList.add('hidden');
+      document.getElementById('saving-overlay').classList.remove('active');
       alert('エラー: ' + e.message);
     }
   }
