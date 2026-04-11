@@ -103,6 +103,7 @@ const signedUrlHandler  = require('./api/signed-url.js');
 const sessionsHandler   = require('./api/sessions.js');
 const scheduleHandler   = require('./api/schedule.js');
 const callNowHandler    = require('./api/call-now.js');
+const tokenHandler      = require('./api/token.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -180,6 +181,15 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await signedUrlHandler(req2, wrapped);
+    return;
+  }
+
+  // ===== POST /api/token =====
+  if (method === 'POST' && url === '/api/token') {
+    const body = await readBody(req);
+    const req2 = Object.assign(req, { method, body });
+    const wrapped = makeResWrapper(res);
+    await tokenHandler(req2, wrapped);
     return;
   }
 
