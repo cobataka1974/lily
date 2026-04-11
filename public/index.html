@@ -215,34 +215,31 @@
   </div>
 
   <script>
-    // ===== スケジュール =====
-    // SCHEDULE: { dayIndex: [hour, ...] } 形式。APIから動的に読み込む
-    var SCHEDULE = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
+    // ===== スケジュール（ダッシュボードから読み込む） =====
+    var SCHEDULE = {};  // 起動時に /api/schedule から取得して上書き
 
-    // スケジュールをAPIから取得してSCHEDULEを更新
-    function loadSchedule() {
-      fetch('/lily/api/schedule')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.status !== 'ok') return;
-          // 初期化
-          SCHEDULE = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
-          (data.schedules || []).forEach(function(s) {
-            if (!s.enabled) return;
-            (s.days || []).forEach(function(d) {
-              if (!SCHEDULE[d]) SCHEDULE[d] = [];
-              if (SCHEDULE[d].indexOf(s.hour) === -1) {
-                SCHEDULE[d].push(s.hour);
-              }
-            });
+    async function loadSchedule() {
+      try {
+        var res = await fetch('/lily/api/schedule');
+        var data = await res.json();
+        var schedules = data.schedules || [];
+        // {days:[0-6], hour, minute, enabled} → SCHEDULE形式に変換
+        var map = {};
+        schedules.filter(function(s){ return s.enabled; }).forEach(function(s) {
+          (s.days || []).forEach(function(d) {
+            if (!map[d]) map[d] = [];
+            if (map[d].indexOf(s.hour) === -1) map[d].push(s.hour);
           });
-          console.log('[schedule] 読み込み完了:', JSON.stringify(SCHEDULE));
-        })
-        .catch(function(e) { console.warn('[schedule] 読み込み失敗:', e.message); });
+        });
+        // 各曜日の時間リストをソート
+        for (var d in map) map[d].sort(function(a,b){ return a - b; });
+        SCHEDULE = map;
+        console.log('[schedule] 読み込み完了:', JSON.stringify(SCHEDULE));
+      } catch(e) {
+        console.warn('[schedule] 読み込み失敗:', e.message);
+        SCHEDULE = {};
+      }
     }
-    loadSchedule();
-    // 5分ごとに再読み込み（ダッシュボードでの変更を反映）
-    setInterval(loadSchedule, 5 * 60 * 1000);
 
     var WEEKDAYS = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
     var MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -254,8 +251,7 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
-    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID（フォールバック用）
-    var signedUrl = null;  // /api/signed-url から取得した wss:// URL
+    var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID
 
     // ===== リリー バックエンド連携 =====
     var BASE_PROMPT = 'あなたはみつこさん（78歳、認知症）のお話し相手「リリー」です。\n'
@@ -334,32 +330,37 @@
     }
 
     /**
-     * 起動時に /api/signed-url を呼び出して wss:// signed URL を取得する。
-     * livekit-client の新バージョンが /rtc/v1 を要求して失敗する問題を回避するため、
-     * agentId 直接渡しではなく signed URL 経由で接続する。
+     * 起動時に /api/config を呼び出して agentId を取得する
+     * （現在はハードコードされているため、この関数は使用されません）
      */
     async function loadConfig() {
+      // agentId はハードコード済みのため、何もしない
+      console.log('[config] agentId はハードコード済み:', agentId);
+      return;
+      
+      /* 以下は参考用に残してあります
       try {
         log('設定を読み込み中…');
-        var res = await fetch('/lily/api/signed-url');
+        var res = await fetch('/lily/api/config');
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
-        if (data.signedUrl) {
-          signedUrl = data.signedUrl;
-          console.log('[config] signedUrl 取得完了');
+        if (data.agentId) {
+          agentId = data.agentId;
+          console.log('[config] agentId 取得完了');
         } else {
-          throw new Error('signedUrl が取得できませんでした: ' + JSON.stringify(data));
+          throw new Error('agentId が取得できませんでした');
         }
       } catch (err) {
-        console.warn('[config] signed URL の取得に失敗しました（agentId でフォールバック）:', err.message);
-        signedUrl = null; // agentId フォールバックを使用
+        console.error('[config] 設定の読み込みに失敗しました:', err.message);
+        log('設定の読み込みに失敗しました: ' + err.message);
       }
+      */
     }
 
-    // 起動時に設定とメモリを読み込む
+    // 起動時に設定・メモリ・スケジュールを読み込む
     (async function init() {
       await loadConfig();
-      await loadMemory();
+      await Promise.all([loadMemory(), loadSchedule()]);
     })();
 
     var logEl = document.getElementById('log');
@@ -500,56 +501,48 @@
       if (!pageActivated || !sdkLoaded || conversation) return;
       var now = new Date();
       var day = now.getDay(), h = now.getHours(), m = now.getMinutes();
-      // 発火ウィンドウ: 指定時刻から3分以内
-      var key = day + '-' + h + '-' + m;
-      if (key === lastTriggeredKey) return;
-
-      // APIから取得したスケジュールデータ（詳細版）と照合
-      fetch('/lily/api/schedule')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          (data.schedules || []).forEach(function(s) {
-            if (!s.enabled) return;
-            if ((s.days || []).indexOf(day) === -1) return;
-            if (s.hour !== h) return;
-            var sm = s.minute || 0;
-            // 指定時刻±2分以内
-            if (Math.abs(m - sm) > 2) return;
-            // まだ発火していない
-            var fireKey = day + '-' + h + '-' + sm;
-            if (fireKey === lastTriggeredKey) return;
-            lastTriggeredKey = fireKey;
+      if (m <= 3) {
+        var key = day + '-' + h;
+        if (key !== lastTriggeredKey) {
+          var hours = SCHEDULE[day] || [];
+          if (hours.indexOf(h) !== -1) {
+            lastTriggeredKey = key;
             hideScreensaver();
             playAlarm();
             setTimeout(function() {
               if (!conversation) startConversation();
             }, 5000);
-          });
-        })
-        .catch(function() {});
-    }
-    setInterval(checkTimer, 30000); // 30秒ごとにチェック
-
-    // ===== SDK読み込み（ローカル固定版 v1.1.1 / IIFE形式）=====
-    // esm.sh の最新版は livekit-client との互換性問題があるためローカルファイルを使用
-    function loadElevenLabsSDK() {
-      return new Promise(function(resolve, reject) {
-        var script = document.createElement('script');
-        script.src = '/lily/public/elevenlabs-client.js';
-        script.onload = function() {
-          // IIFE は window.ElevenLabsClient に展開される
-          if (window.ElevenLabsClient && window.ElevenLabsClient.Conversation) {
-            resolve(window.ElevenLabsClient);
-          } else {
-            reject(new Error('ElevenLabsClient.Conversation が見つかりません'));
           }
-        };
-        script.onerror = function() { reject(new Error('SDKファイルの読み込みに失敗しました')); };
-        document.head.appendChild(script);
-      });
+        }
+      }
     }
+    setInterval(checkTimer, 10000);
 
-    loadElevenLabsSDK()
+    // ===== 遠隔「今すぐ会話」ポーリング =====
+    async function checkCallNow() {
+      if (!sdkLoaded || conversation) return; // スクリーンセーバー中・未アクティベートでも動かす
+      try {
+        var res = await fetch('/lily/api/call-now');
+        var data = await res.json();
+        if (data.requested) {
+          console.log('[call-now] 遠隔から会話開始コマンドを受信');
+          // スクリーンセーバーを消して画面をアクティベート
+          hideScreensaver();
+          pageActivated = true;
+          document.getElementById('ready-banner').classList.add('hidden');
+          playAlarm();
+          setTimeout(function() {
+            if (!conversation) startConversation();
+          }, 3000);
+        }
+      } catch(e) {
+        // ネットワークエラーは無視
+      }
+    }
+    setInterval(checkCallNow, 10000); // 10秒ごとにチェック
+
+    // ===== SDK読み込み =====
+    import('https://esm.sh/@elevenlabs/client')
       .then(function(module) {
         Conversation = module.Conversation;
         sdkLoaded = true;
@@ -598,80 +591,84 @@
         sessionStartTime = new Date();
         currentConversationId = null;
 
-        // 毎回新しい signed URL を取得（JWT は1回限り有効）
-        log('接続準備中…');
-        await loadConfig();
-
-        log('接続中…');
-
-        // signedUrl が取得できていれば使用（livekit互換問題を回避）
-        // 取得失敗時は agentId フォールバック
-        var sessionParams;
-        if (signedUrl) {
-          console.log('[startConversation] signedUrl で接続します');
-          sessionParams = {
-            signedUrl: signedUrl,
-            overrides: {
-              agent: {
-                prompt: {
-                  prompt: fullSystemPrompt,
-                },
-              },
-            },
-          };
-        } else {
-          console.log('[startConversation] agentId で接続します（フォールバック）:', agentId);
-          sessionParams = {
-            agentId: agentId,
-            overrides: {
-              agent: {
-                prompt: {
-                  prompt: fullSystemPrompt,
-                },
-              },
-            },
-          };
+        if (!agentId) {
+          log('エラー: agentId が設定されていません');
+          setBtn('idle');
+          return;
         }
 
-        // コールバックを sessionParams にマージして startSession を呼ぶ
-        sessionParams.onConnect = function(props) {
-          log('接続しました ✅');
-          setBtn('talking');
-          // conversationId を取得して保持
-          if (props && props.conversationId) {
-            currentConversationId = props.conversationId;
-            console.log('[connect] conversationId:', currentConversationId);
+        log('接続中…');
+        console.log('[startConversation] Fetching signed URL from /api/token');
+
+        // サーバーからSigned URLを取得
+        const tokenResponse = await fetch('/lily/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          log('エラー: トークン取得失敗 - ' + (errorData.error || tokenResponse.statusText));
+          setBtn('idle');
+          return;
+        }
+
+        const { signedUrl } = await tokenResponse.json();
+        console.log('[startConversation] Got signed URL, starting session');
+
+        conversation = await Conversation.startSession({
+          signedUrl: signedUrl,
+          overrides: {
+            agent: {
+              prompt: {
+                prompt: fullSystemPrompt,
+              },
+            },
+            tts: {
+              voiceId: '2JoPnaUSkgU9bMhXXOUP',  // 静加の声（固定）
+              stability: 0.21,
+              similarityBoost: 0.88,
+              speed: 0.8,  // みつこさん向けにゆっくり
+            },
+          },
+          onConnect: function(props) {
+            log('接続しました ✅');
+            setBtn('talking');
+            // conversationId を取得して保持
+            if (props && props.conversationId) {
+              currentConversationId = props.conversationId;
+              console.log('[connect] conversationId:', currentConversationId);
+            }
+          },
+          onDisconnect: function(reason) {
+            console.log('[onDisconnect] Reason:', reason);
+            log('切断されました: ' + (reason ? JSON.stringify(reason) : '不明'));
+            var endedConversationId = currentConversationId;
+            conversation = null;
+            currentConversationId = null;
+            setBtn('idle');
+            statusEl.textContent = 'またお話ししましょう 🎋';
+
+            // バックエンドへ会話分析をリクエスト
+            postAnalyze(endedConversationId);
+
+            // 会話終了後2分でスクリーンセーバー起動
+            setTimeout(function() {
+              if (!conversation) showScreensaver();
+            }, 2 * 60 * 1000);
+          },
+          onError: function(err) {
+            console.error('[onError]', err);
+            log('エラー: ' + (err.message || JSON.stringify(err)));
+            conversation = null;
+            currentConversationId = null;
+            setBtn('idle');
+          },
+          onModeChange: function(mode) {
+            if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
+            else if (mode.mode === 'listening') statusEl.textContent = '🎤 聞いています…';
           }
-        };
-        sessionParams.onDisconnect = function() {
-          var endedConversationId = currentConversationId;
-          conversation = null;
-          currentConversationId = null;
-          signedUrl = null; // 次回接続時に新しい signedUrl を取得させる
-          setBtn('idle');
-          statusEl.textContent = 'またお話ししましょう 🎋';
-
-          // バックエンドへ会話分析をリクエスト
-          postAnalyze(endedConversationId);
-
-          // 会話終了後2分でスクリーンセーバー起動
-          setTimeout(function() {
-            if (!conversation) showScreensaver();
-          }, 2 * 60 * 1000);
-        };
-        sessionParams.onError = function(err) {
-          console.error('[onError]', err);
-          log('エラー: ' + (err.message || JSON.stringify(err)));
-          conversation = null;
-          currentConversationId = null;
-          setBtn('idle');
-        };
-        sessionParams.onModeChange = function(mode) {
-          if (mode.mode === 'speaking') statusEl.textContent = '🔊 話しています…';
-          else if (mode.mode === 'listening') statusEl.textContent = '🎤 聞いています…';
-        };
-
-        conversation = await Conversation.startSession(sessionParams);
+        });
       } catch(err) {
         console.error('[startConversation catch]', err);
         log('エラー: ' + err.message);
