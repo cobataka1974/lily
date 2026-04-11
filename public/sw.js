@@ -1,18 +1,10 @@
-// public/sw.js
-// Service Worker - キャッシュなし（常に最新を取得）
-
-// インストール時: 即座にアクティベート
+// Service Worker 無効化 - 全キャッシュ削除して即座に登録解除
 self.addEventListener('install', () => self.skipWaiting());
-
-// アクティベート時: 全キャッシュ削除して即座にクライアントを制御
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.registration.unregister())
   );
   self.clients.claim();
-});
-
-// フェッチ時: 常にネットワークから取得（キャッシュ一切使わない）
-self.addEventListener('fetch', (event) => {
-  event.respondWith(fetch(event.request));
 });
