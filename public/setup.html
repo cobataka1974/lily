@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>しずか セットアップ</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      background: #fdf6ee; color: #3d2e1e; min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #c06030 0%, #e07840 100%);
+      padding: 20px 20px 24px; color: white; text-align: center;
+    }
+    .header-title { font-size: 22px; font-weight: 700; }
+    .header-sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+    /* ステップインジケーター */
+    .steps {
+      display: flex; justify-content: center;
+      gap: 0; padding: 20px 16px 0;
+    }
+    .step-item {
+      flex: 1; max-width: 80px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .step-circle {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #e8cbb4; color: #b09880;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-circle.active { background: #c06030; color: white; }
+    .step-circle.done   { background: #e07840; color: white; }
+    .step-label { font-size: 10px; color: #9a7860; text-align: center; }
+    .step-line {
+      flex: 1; height: 2px; background: #e8cbb4;
+      margin-top: 15px; max-width: 40px;
+    }
+    .step-line.done { background: #c06030; }
+
+    /* コンテンツ */
+    .content { padding: 20px 16px 40px; max-width: 480px; margin: 0 auto; }
+    .card {
+      background: white; border-radius: 20px;
+      padding: 24px 20px; margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(180,100,60,0.08);
+    }
+    .card-title {
+      font-size: 16px; font-weight: 700; color: #c06030;
+      margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+    }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: #9a7860; margin-bottom: 6px;
+    }
+    .field label .required {
+      color: #c06030; margin-left: 4px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 12px 14px;
+      border: 2px solid #e8cbb4; border-radius: 12px;
+      font-size: 15px; color: #5a3e2e;
+      background: #fdf6ee; font-family: inherit;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      outline: none; border-color: #c06030;
+    }
+    .field textarea { resize: vertical; min-height: 80px; }
+
+    /* ラジオ */
+    .radio-group { display: flex; flex-direction: column; gap: 10px; }
+    .radio-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #fdf6ee; border-radius: 12px; padding: 12px 14px;
+      border: 2px solid #e8cbb4; cursor: pointer;
+    }
+    .radio-item.selected { border-color: #c06030; background: #fff3ec; }
+    .radio-item input { width: auto; }
+    .radio-item span { font-size: 14px; color: #5a3e2e; font-weight: 500; }
+
+    /* アップロード */
+    .upload-area {
+      border: 2px dashed #e8cbb4; border-radius: 16px;
+      padding: 32px 20px; text-align: center;
+      cursor: pointer; transition: all 0.2s;
+      background: #fdf6ee;
+    }
+    .upload-area:hover, .upload-area.drag { border-color: #c06030; background: #fff3ec; }
+    .upload-icon { font-size: 40px; margin-bottom: 10px; }
+    .upload-text { font-size: 15px; color: #7a5a40; font-weight: 500; }
+    .upload-sub  { font-size: 12px; color: #b09880; margin-top: 6px; }
+    .upload-input { display: none; }
+    .file-selected {
+      background: #e8f5e8; border-color: #60a060;
+      border-style: solid;
+    }
+    .file-selected .upload-icon::after { content: '✅'; }
+
+    .skip-btn {
+      width: 100%; padding: 12px;
+      background: #f0e4d8; color: #9a7860;
+      border: none; border-radius: 12px;
+      font-size: 14px; cursor: pointer; margin-top: 12px;
+    }
+
+    /* 声クローンボタン */
+    .clone-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, #c06030, #e07840);
+      color: white; border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      margin-top: 12px; transition: all 0.2s;
+    }
+    .clone-btn:disabled { background: #d4b896; cursor: default; }
+    .clone-status {
+      margin-top: 10px; text-align: center;
+      font-size: 13px; color: #9a7860; min-height: 20px;
+    }
+
+    /* 確認画面 */
+    .summary-item {
+      display: flex; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f0e4d8;
+    }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-label { font-size: 12px; color: #9a7860; min-width: 100px; }
+    .summary-value { font-size: 14px; color: #5a3e2e; font-weight: 500; flex: 1; }
+
+    .url-box {
+      background: #fdf6ee; border: 2px solid #e8cbb4;
+      border-radius: 12px; padding: 14px 16px;
+      font-size: 13px; color: #c06030;
+      word-break: break-all; margin: 12px 0;
+      font-weight: 600;
+    }
+
+    /* ナビゲーション */
+    .nav { display: flex; gap: 10px; margin-top: 8px; }
+    .btn-back {
+      flex: 1; padding: 16px;
+      background: #f0e4d8; color: #9a7860;
+      border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn-next {
+      flex: 2; padding: 16px;
+      background: #c06030; color: white;
+      border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    .btn-next:disabled { background: #d4b896; cursor: default; }
+    .btn-full {
+      width: 100%; padding: 16px;
+      background: #c06030; color: white;
+      border: none; border-radius: 14px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-copy {
+      width: 100%; padding: 14px;
+      background: #f0e4d8; color: #c06030;
+      border: none; border-radius: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+
+    .hidden { display: none; }
+    .saving-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .saving-box {
+      background: white; border-radius: 20px;
+      padding: 32px 40px; text-align: center;
+    }
+    .saving-spinner { font-size: 40px; animation: spin 2s linear infinite; }
+    .saving-text { font-size: 16px; color: #5a3e2e; margin-top: 12px; }
+    @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">🌸 新しいユーザーのセットアップ</div>
+  <div class="header-sub">ステップに沿って情報を入力してください</div>
+</div>
+
+<!-- ステップインジケーター -->
+<div class="steps">
+  <div class="step-item">
+    <div class="step-circle active" id="sc1">1</div>
+    <div class="step-label">お相手の情報</div>
+  </div>
+  <div class="step-line" id="sl1"></div>
+  <div class="step-item">
+    <div class="step-circle" id="sc2">2</div>
+    <div class="step-label">AIの設定</div>
+  </div>
+  <div class="step-line" id="sl2"></div>
+  <div class="step-item">
+    <div class="step-circle" id="sc3">3</div>
+    <div class="step-label">声のアップロード</div>
+  </div>
+  <div class="step-line" id="sl3"></div>
+  <div class="step-item">
+    <div class="step-circle" id="sc4">4</div>
+    <div class="step-label">完成</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <div class="card">
+      <div class="card-title">👴👵 会話する方の情報</div>
+      <div class="field">
+        <label>お名前<span class="required">*</span></label>
+        <input type="text" id="s1-name" placeholder="例：田中はなこ">
+      </div>
+      <div class="field">
+        <label>年齢</label>
+        <input type="text" id="s1-age" placeholder="例：82歳">
+      </div>
+      <div class="field">
+        <label>出身地・住んでいた場所</label>
+        <input type="text" id="s1-place" placeholder="例：大阪市北区">
+      </div>
+      <div class="field">
+        <label>好きな食べ物・趣味</label>
+        <input type="text" id="s1-hobby" placeholder="例：お茶漬け、園芸、読書">
+      </div>
+      <div class="field">
+        <label>家族の名前（子・孫など）</label>
+        <textarea id="s1-family" placeholder="例：長男：たろう（55歳）、孫：さくら（10歳）"></textarea>
+      </div>
+      <div class="field">
+        <label>その他・特記事項</label>
+        <textarea id="s1-memo" placeholder="例：昔は料理が得意だった、猫が好き"></textarea>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-next" onclick="goStep(2)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" class="hidden">
+    <div class="card">
+      <div class="card-title">🎭 AIに演じてほしい人</div>
+      <div class="field">
+        <label>どんな人を演じますか？<span class="required">*</span></label>
+        <div class="radio-group" id="relation-group">
+          <label class="radio-item" onclick="selectRelation(this, 'のご主人')">
+            <input type="radio" name="relation" value="のご主人">
+            <span>💑 故人のご主人・奥様</span>
+          </label>
+          <label class="radio-item" onclick="selectRelation(this, 'の子ども')">
+            <input type="radio" name="relation" value="の子ども">
+            <span>👨‍👩‍👧 遠くに住む子ども</span>
+          </label>
+          <label class="radio-item" onclick="selectRelation(this, 'の昔の友人')">
+            <input type="radio" name="relation" value="の昔の友人">
+            <span>👫 昔の友人</span>
+          </label>
+          <label class="radio-item" onclick="selectRelation(this, 'の')">
+            <input type="radio" name="relation" value="その他">
+            <span>✏️ その他</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label>AIの名前（その方のお名前）<span class="required">*</span></label>
+        <input type="text" id="s2-ainame" placeholder="例：たけし">
+      </div>
+      <div class="field">
+        <label>どんな呼ばれ方をしていましたか？</label>
+        <input type="text" id="s2-called" placeholder="例：おとうさん、パパ、たけちゃん">
+      </div>
+      <div class="field">
+        <label>話し方の特徴（任意）</label>
+        <input type="text" id="s2-style" placeholder="例：穏やか、明るい、関西弁">
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="goStep(1)">← 戻る</button>
+      <button class="btn-next" onclick="goStep(3)">次へ →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" class="hidden">
+    <div class="card">
+      <div class="card-title">🎤 声のアップロード</div>
+      <p style="font-size:13px;color:#7a5a40;margin-bottom:16px;line-height:1.7;">
+        その方の声が入った音声・動画ファイルをアップロードすると、
+        AIがその声で話せるようになります。<br>
+        <strong>1〜3分の録音があれば十分です。</strong>
+      </p>
+
+      <div class="upload-area" id="upload-area"
+           onclick="document.getElementById('file-input').click()"
+           ondragover="onDragOver(event)"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event)">
+        <div class="upload-icon">🎵</div>
+        <div class="upload-text">ここをタップしてファイルを選択</div>
+        <div class="upload-sub">対応形式：mp3, mp4, m4a, wav, mov など（最大50MB）</div>
+      </div>
+      <input type="file" id="file-input" class="upload-input"
+             accept="audio/*,video/*"
+             onchange="onFileSelected(this)">
+
+      <div id="file-name" style="margin-top:10px;font-size:13px;color:#c06030;font-weight:600;"></div>
+
+      <button class="clone-btn" id="clone-btn" onclick="createVoiceClone()" disabled>
+        🎤 この声でクローンを作成する
+      </button>
+      <div class="clone-status" id="clone-status"></div>
+
+      <button class="skip-btn" onclick="skipVoice()">
+        声はない・後で設定する（デフォルトの声を使用）
+      </button>
+    </div>
+    <div class="nav">
+      <button class="btn-back" onclick="goStep(2)">← 戻る</button>
+      <button class="btn-next" id="step3-next" onclick="goStep(4)" disabled>次へ →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div id="step4" class="hidden">
+    <div class="card">
+      <div class="card-title">✅ 確認・完成</div>
+      <div id="summary-list"></div>
+    </div>
+
+    <div class="card" id="result-card" style="display:none;">
+      <div class="card-title">🎉 セットアップ完了！</div>
+      <p style="font-size:14px;color:#7a5a40;margin-bottom:12px;">
+        専用URLが発行されました。このURLをタブレットのホーム画面に追加してください。
+      </p>
+      <div class="url-box" id="result-url"></div>
+      <button class="btn-copy" onclick="copyUrl()">📋 URLをコピー</button>
+      <a href="/lily/dashboard" style="display:block;margin-top:10px;">
+        <button class="btn-full" style="background:#7a5a40;">ダッシュボードへ →</button>
+      </a>
+    </div>
+
+    <div id="confirm-nav" class="nav">
+      <button class="btn-back" onclick="goStep(3)">← 戻る</button>
+      <button class="btn-next" onclick="saveAndFinish()">🌸 保存して完成</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- 保存中オーバーレイ -->
+<div class="saving-overlay hidden" id="saving-overlay">
+  <div class="saving-box">
+    <div class="saving-spinner">🌸</div>
+    <div class="saving-text" id="saving-text">保存中です…</div>
+  </div>
+</div>
+
+<script>
+  var currentStep = 1;
+  var selectedRelation = '';
+  var clonedVoiceId = '';
+  var selectedFile = null;
+  var finalUrl = '';
+
+  // ===== ステップ移動 =====
+  function goStep(n) {
+    if (n === 2 && !document.getElementById('s1-name').value.trim()) {
+      alert('お名前を入力してください'); return;
+    }
+    if (n === 3 && !document.getElementById('s2-ainame').value.trim()) {
+      alert('AIの名前を入力してください'); return;
+    }
+    if (n === 4) buildSummary();
+
+    document.getElementById('step' + currentStep).classList.add('hidden');
+    document.getElementById('step' + n).classList.remove('hidden');
+
+    // インジケーター更新
+    for (var i = 1; i <= 4; i++) {
+      var c = document.getElementById('sc' + i);
+      c.className = 'step-circle' + (i < n ? ' done' : i === n ? ' active' : '');
+      if (i < 4) {
+        var l = document.getElementById('sl' + i);
+        if (l) l.className = 'step-line' + (i < n ? ' done' : '');
+      }
+    }
+    currentStep = n;
+    window.scrollTo(0, 0);
+  }
+
+  // ===== ラジオ選択 =====
+  function selectRelation(el, val) {
+    document.querySelectorAll('.radio-item').forEach(function(r) { r.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedRelation = val;
+  }
+
+  // ===== ファイル選択 =====
+  function onFileSelected(input) {
+    if (!input.files || !input.files[0]) return;
+    selectedFile = input.files[0];
+    document.getElementById('file-name').textContent = '📎 ' + selectedFile.name;
+    document.getElementById('upload-area').classList.add('file-selected');
+    document.getElementById('clone-btn').disabled = false;
+    document.getElementById('step3-next').disabled = false; // スキップ可
+  }
+
+  function onDragOver(e) { e.preventDefault(); document.getElementById('upload-area').classList.add('drag'); }
+  function onDragLeave(e) { document.getElementById('upload-area').classList.remove('drag'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-area').classList.remove('drag');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      selectedFile = file;
+      document.getElementById('file-name').textContent = '📎 ' + file.name;
+      document.getElementById('upload-area').classList.add('file-selected');
+      document.getElementById('clone-btn').disabled = false;
+      document.getElementById('step3-next').disabled = false;
+    }
+  }
+
+  // ===== 声クローン作成 =====
+  async function createVoiceClone() {
+    if (!selectedFile) return;
+    var btn = document.getElementById('clone-btn');
+    var status = document.getElementById('clone-status');
+    btn.disabled = true;
+    btn.textContent = '⏳ クローン作成中…（1〜2分かかります）';
+    status.textContent = 'ElevenLabsにアップロード中…';
+
+    var aiName = document.getElementById('s2-ainame').value.trim() || 'AI';
+    var formData = new FormData();
+    formData.append('name', aiName + '_clone_' + Date.now());
+    formData.append('files', selectedFile, selectedFile.name);
+
+    try {
+      var res = await fetch('/lily/api/voice-clone', {
+        method: 'POST',
+        body: formData,
+      });
+      var data = await res.json();
+      if (data.status === 'ok' && data.voiceId) {
+        clonedVoiceId = data.voiceId;
+        btn.textContent = '✅ 声クローン完成！';
+        status.textContent = 'Voice ID: ' + clonedVoiceId;
+        document.getElementById('step3-next').disabled = false;
+      } else {
+        throw new Error(data.message || 'クローン作成失敗');
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '🎤 この声でクローンを作成する';
+      status.textContent = '⚠️ エラー: ' + e.message;
+    }
+  }
+
+  // ===== 声スキップ =====
+  function skipVoice() {
+    clonedVoiceId = '';
+    document.getElementById('step3-next').disabled = false;
+    goStep(4);
+  }
+
+  // ===== サマリー構築 =====
+  function buildSummary() {
+    var name    = document.getElementById('s1-name').value.trim();
+    var age     = document.getElementById('s1-age').value.trim();
+    var place   = document.getElementById('s1-place').value.trim();
+    var hobby   = document.getElementById('s1-hobby').value.trim();
+    var family  = document.getElementById('s1-family').value.trim();
+    var memo    = document.getElementById('s1-memo').value.trim();
+    var aiName  = document.getElementById('s2-ainame').value.trim();
+    var called  = document.getElementById('s2-called').value.trim();
+    var style   = document.getElementById('s2-style').value.trim();
+
+    var items = [
+      ['会話する方のお名前', name],
+      ['年齢', age || '未入力'],
+      ['出身地', place || '未入力'],
+      ['好きなもの', hobby || '未入力'],
+      ['家族', family || '未入力'],
+      ['AIの名前', aiName],
+      ['AIの関係', selectedRelation || '未選択'],
+      ['呼ばれ方', called || '未入力'],
+      ['声クローン', clonedVoiceId ? '✅ 作成済み (' + clonedVoiceId + ')' : '（デフォルト）'],
+    ];
+
+    var html = items.map(function(it) {
+      return '<div class="summary-item"><div class="summary-label">' + it[0] + '</div><div class="summary-value">' + it[1] + '</div></div>';
+    }).join('');
+    document.getElementById('summary-list').innerHTML = html;
+  }
+
+  // ===== システムプロンプト自動生成 =====
+  function buildPrompt() {
+    var name    = document.getElementById('s1-name').value.trim();
+    var age     = document.getElementById('s1-age').value.trim();
+    var place   = document.getElementById('s1-place').value.trim();
+    var hobby   = document.getElementById('s1-hobby').value.trim();
+    var family  = document.getElementById('s1-family').value.trim();
+    var memo    = document.getElementById('s1-memo').value.trim();
+    var aiName  = document.getElementById('s2-ainame').value.trim();
+    var called  = document.getElementById('s2-called').value.trim();
+    var style   = document.getElementById('s2-style').value.trim();
+    var rel     = selectedRelation || 'の大切な人';
+
+    return 'あなたの名前は「' + aiName + '」です。' + name + 'さん' + rel + 'です。\n'
+      + (called ? name + 'さんから「' + called + '」など、どう呼ばれてもかまいません。自然に応えてください。\n\n' : '\n')
+      + '【話し方の絶対ルール】\n'
+      + '・ゆっくり、はっきり、短く話す\n'
+      + '・1回の発言は必ず1〜2文以内。句点（。）で明確に終わる\n'
+      + '・質問は1回に1つだけ\n'
+      + '・同じ話を繰り返されても初めて聞くように応える\n'
+      + '・記憶が違っていても否定しない。話に乗る\n'
+      + '・「認知症」「物忘れ」という言葉は絶対に使わない\n'
+      + (style ? '・話し方の特徴：' + style + '\n' : '')
+      + '\n【' + name + 'さんのプロフィール】\n'
+      + (age     ? '・年齢：' + age + '\n' : '')
+      + (place   ? '・出身地：' + place + '\n' : '')
+      + (hobby   ? '・好きなもの：' + hobby + '\n' : '')
+      + (family  ? '・家族：' + family + '\n' : '')
+      + (memo    ? '・' + memo + '\n' : '')
+      + '\n【禁止事項】\n'
+      + '・ニュース・政治・将来の不安を煽る話\n'
+      + '・複雑な選択肢の提示・長い説明・急かすような言葉';
+  }
+
+  // ===== ユーザーID生成 =====
+  function generateUserId(name) {
+    var map = {'あ':'a','い':'i','う':'u','え':'e','お':'o','か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko','さ':'sa','し':'si','す':'su','せ':'se','そ':'so','た':'ta','ち':'ti','つ':'tu','て':'te','と':'to','な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no','は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho','ま':'ma','み':'mi','む':'mu','め':'me','も':'mo','や':'ya','ゆ':'yu','よ':'yo','ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro','わ':'wa','を':'wo','ん':'n'};
+    var id = '';
+    for (var i = 0; i < name.length; i++) {
+      var c = name[i].toLowerCase();
+      id += map[c] || c;
+    }
+    id = id.replace(/[^a-z0-9]/g, '').slice(0, 8);
+    if (!id) id = 'user';
+    return id + String(Math.floor(1000 + Math.random() * 9000));
+  }
+
+  // ===== 保存して完成 =====
+  async function saveAndFinish() {
+    var name   = document.getElementById('s1-name').value.trim();
+    var aiName = document.getElementById('s2-ainame').value.trim();
+    if (!name || !aiName) { alert('必須項目を入力してください'); return; }
+
+    var userId = generateUserId(name);
+    var prompt = buildPrompt();
+    var voiceId = clonedVoiceId || '2JoPnaUSkgU9bMhXXOUP'; // デフォルト=しずか
+
+    document.getElementById('saving-overlay').classList.remove('hidden');
+    document.getElementById('saving-text').textContent = 'ユーザーを登録中…';
+
+    try {
+      var res = await fetch('/lily/api/user-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId:  userId,
+          name:    name,
+          agentId: 'agent_2901kk4fbdaaeevsakrmknmp7jz4', // デフォルトAgent（後で変更可）
+          voiceId: voiceId,
+          pin:     '1234',
+          prompt:  prompt,
+        }),
+      });
+      var data = await res.json();
+      document.getElementById('saving-overlay').classList.add('hidden');
+
+      if (data.status === 'ok') {
+        finalUrl = 'https://bvjozroi.gensparkclaw.com/lily/?id=' + encodeURIComponent(userId);
+        document.getElementById('result-url').textContent = finalUrl;
+        document.getElementById('result-card').style.display = 'block';
+        document.getElementById('confirm-nav').style.display = 'none';
+        document.getElementById('summary-list').insertAdjacentHTML('beforebegin',
+          '<p style="font-size:14px;color:#c06030;font-weight:700;margin-bottom:12px;">ユーザーID: ' + userId + '</p>');
+      } else {
+        alert('保存に失敗しました: ' + data.message);
+      }
+    } catch(e) {
+      document.getElementById('saving-overlay').classList.add('hidden');
+      alert('エラー: ' + e.message);
+    }
+  }
+
+  function copyUrl() {
+    navigator.clipboard.writeText(finalUrl).then(function() {
+      alert('URLをコピーしました！');
+    });
+  }
+</script>
+</body>
+</html>

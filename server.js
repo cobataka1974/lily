@@ -104,7 +104,8 @@ const sessionsHandler   = require('./api/sessions.js');
 const scheduleHandler   = require('./api/schedule.js');
 const callNowHandler    = require('./api/call-now.js');
 const tokenHandler      = require('./api/token.js');
-const userConfigHandler = require('./api/user-config.js');
+const userConfigHandler  = require('./api/user-config.js');
+const voiceCloneHandler  = require('./api/voice-clone.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -182,6 +183,23 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await signedUrlHandler(req2, wrapped);
+    return;
+  }
+
+  // ===== GET /setup → setup.html =====
+  if (method === 'GET' && (url === '/setup' || url === '/setup/')) {
+    const filePath = path.join(ROOT, 'public', 'setup.html');
+    try {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(fs.readFileSync(filePath));
+    } catch(e) { res.writeHead(404); res.end('setup.html not found'); }
+    return;
+  }
+
+  // ===== POST /api/voice-clone =====
+  if (method === 'POST' && url === '/api/voice-clone') {
+    const wrapped = makeResWrapper(res);
+    await voiceCloneHandler(req, wrapped);
     return;
   }
 
