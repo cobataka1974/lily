@@ -720,8 +720,24 @@
       <input class="modal-input" id="modal-user-voiceId" type="text" placeholder="ElevenLabsのVoice ID" style="flex:1;margin-bottom:0;">
       <button id="voice-clone-btn" onclick="openVoiceClonePanel()" style="white-space:nowrap;padding:8px 12px;background:#e07b4f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🎤 声を登録</button>
     </div>
-    <div id="voice-clone-panel" style="display:none;margin-top:10px;padding:12px;background:#fff8f0;border-radius:10px;border:1px solid #e0c8b0;">
-      <div style="font-size:13px;color:#7a5c3a;margin-bottom:8px;">音声ファイルをアップロードして声をクローンします</div>
+    <div id="voice-clone-panel" style="display:none;margin-top:10px;padding:14px;background:#fff8f0;border-radius:10px;border:1px solid #e0c8b0;">
+      <div style="font-size:13px;font-weight:700;color:#c06030;margin-bottom:8px;">🎤 声のクローン登録</div>
+      <div style="font-size:12px;color:#7a5c3a;margin-bottom:10px;line-height:1.7;">
+        その方の声が入った音声・動画ファイルをアップロードしてください。<br>
+        録音がない場合は、以下の原稿を読み上げて録音してください。
+      </div>
+      <!-- 読み上げ原稿 -->
+      <div style="background:#fff;border:1px solid #e0c8b0;border-radius:8px;padding:12px;margin-bottom:10px;font-size:12px;color:#555;line-height:2.0;">
+        はい、もしもし。わかった、わかった。うん、大丈夫だよ。<br>
+        今日はね、天気がよかったから、ちょっと散歩してきたんだよ。気持ちよかったよ。<br>
+        そうそう、昨日の夜ごはん、美味しかったね。また作ってよ。<br>
+        あのね、昔のことを思い出してたんだけど、あの頃は楽しかったなあ。<br>
+        うん、うん。そうだよ。心配しなくていいよ。ちゃんとそこにいるから。<br>
+        じゃあ、またね。元気でいてよ。
+      </div>
+      <div style="font-size:11px;color:#999;margin-bottom:10px;line-height:1.7;">
+        💡 静かな部屋・口から10〜20cm離して・ゆっくり自然に
+      </div>
       <input type="file" id="voice-file-input" accept="audio/*,video/*" style="font-size:13px;margin-bottom:8px;width:100%;">
       <button onclick="uploadVoiceClone()" style="padding:8px 16px;background:#4caf50;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;width:100%;">🎵 クローン作成</button>
       <div id="voice-clone-status" style="font-size:12px;color:#888;margin-top:6px;"></div>

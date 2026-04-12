@@ -303,12 +303,41 @@
   <!-- STEP 3 -->
   <div id="step3" class="hidden">
     <div class="card">
-      <div class="card-title">🎤 声のアップロード</div>
+      <div class="card-title">🎤 声の登録</div>
       <p style="font-size:13px;color:#7a5a40;margin-bottom:16px;line-height:1.7;">
-        その方の声が入った音声・動画ファイルをアップロードすると、
-        AIがその声で話せるようになります。<br>
-        <strong>1〜3分の録音があれば十分です。</strong>
+        その方の声を登録すると、AIがその声でお話しします。<br>
+        <strong>スマホで録音した音声（30秒〜3分）が一番うまくいきます。</strong>
       </p>
+
+      <!-- 録音原稿 -->
+      <div style="background:#fff8f0;border:1px solid #e8c9a0;border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;color:#c06030;margin-bottom:10px;">📝 録音用の原稿</div>
+        <div style="font-size:13px;color:#555;line-height:2.0;background:#fff;border-radius:8px;padding:14px;border:1px solid #e8d0b0;">
+          はい、もしもし。わかった、わかった。うん、大丈夫だよ。<br><br>
+          今日はね、天気がよかったから、ちょっと散歩してきたんだよ。気持ちよかったよ。<br><br>
+          そうそう、昨日の夜ごはん、美味しかったね。また作ってよ。<br><br>
+          あのね、昔のことを思い出してたんだけど、あの頃は楽しかったなあ。<br><br>
+          うん、うん。そうだよ。心配しなくていいよ。ちゃんとそこにいるから。<br><br>
+          じゃあ、またね。元気でいてよ。
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#888;line-height:1.8;">
+          💡 <strong>録音のコツ</strong><br>
+          ・静かな部屋で録音する<br>
+          ・マイクを口から10〜20cmくらい離す<br>
+          ・ゆっくり、自然な声で読む<br>
+          ・途中で止まっても大丈夫です
+        </div>
+      </div>
+
+      <!-- 既存音声がある場合 -->
+      <div style="background:#f0f7ff;border:1px solid #b0cce8;border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;color:#3a6a9a;margin-bottom:6px;">📁 既存の音声・動画ファイルでもOK</div>
+        <div style="font-size:12px;color:#666;line-height:1.7;">
+          電話の録音、ビデオ通話の動画、ボイスメモなど<br>
+          その方の声が入っていれば何でも使えます。<br>
+          対応形式：mp3, mp4, m4a, wav, mov など（最大50MB）
+        </div>
+      </div>
 
       <div class="upload-area" id="upload-area"
            onclick="document.getElementById('file-input').click()"
@@ -317,7 +346,7 @@
            ondrop="onDrop(event)">
         <div class="upload-icon">🎵</div>
         <div class="upload-text">ここをタップしてファイルを選択</div>
-        <div class="upload-sub">対応形式：mp3, mp4, m4a, wav, mov など（最大50MB）</div>
+        <div class="upload-sub">録音ファイルまたは動画ファイル（最大50MB）</div>
       </div>
       <input type="file" id="file-input" class="upload-input"
              accept="audio/*,video/*"
