@@ -15,11 +15,14 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ status: 'error', message: 'GET only' });
   }
 
+  // userIdをURLパラメータから取得
+  const userId = new URL('http://x' + req.url).searchParams.get('userId') || 'default';
+
   // GAS が設定されていれば GAS から取得（最新データ）
   const gasUrl = process.env.GAS_WEB_APP_URL;
   if (gasUrl) {
     try {
-      const sessions = await fetchFromGas(gasUrl);
+      const sessions = await fetchFromGas(gasUrl, userId);
       return res.status(200).json({ status: 'ok', sessions });
     } catch (err) {
       console.warn('[sessions] GAS取得失敗、sessions.json にフォールバック:', err.message);
@@ -38,9 +41,12 @@ module.exports = async function handler(req, res) {
   }
 };
 
-function fetchFromGas(gasUrl) {
+function fetchFromGas(gasUrl, userId) {
   return new Promise((resolve, reject) => {
     const url = new URL(gasUrl);
+    // userIdをGASに渡す
+    url.searchParams.set('action', 'memory');
+    url.searchParams.set('userId', userId || 'default');
     const options = {
       hostname: url.hostname,
       path: url.pathname + url.search,
@@ -64,8 +70,13 @@ function fetchFromGas(gasUrl) {
         res.on('end', () => {
           try {
             const json = JSON.parse(data);
-            if (json.status === 'ok' && Array.isArray(json.sessions)) {
-              resolve(json.sessions);
+            if (json.status === 'ok') {
+              // GASのmemoryレスポンス形式: { sessions: [...] }
+              if (Array.isArray(json.sessions)) {
+                resolve(json.sessions);
+              } else {
+                resolve([]);
+              }
             } else {
               reject(new Error('GAS response: ' + JSON.stringify(json).substring(0, 100)));
             }

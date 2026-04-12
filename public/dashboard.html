@@ -630,7 +630,7 @@
     <div class="dash-header-top">
       <div>
         <div class="dash-title">🌸 リリーの記録</div>
-        <div class="dash-subtitle">みつこさんの会話ログ</div>
+        <div class="dash-subtitle" id="dash-subtitle">会話ログ</div>
       </div>
       <button class="logout-btn" onclick="logout()">ログアウト</button>
     </div>
@@ -789,10 +789,14 @@
       if (data.status === 'ok' && data.pin) {
         CORRECT_PIN = String(data.pin);
       }
-      // ユーザー名をログイン画面に表示
+      // ユーザー名をログイン画面・ダッシュボードに表示
       if (data.name) {
         var sub = document.querySelector('.login-sub');
         if (sub) sub.textContent = data.name + 'さんの様子をお伝えします';
+        var dashSub = document.getElementById('dash-subtitle');
+        if (dashSub) dashSub.textContent = data.name + 'さんの会話ログ';
+        var callStatus = document.getElementById('call-status');
+        if (callStatus) callStatus.textContent = data.name + 'さんの画面でまもなく会話が始まります（最大10秒）';
       }
     } catch(e) { /* デフォルトPIN使用 */ }
 
@@ -858,7 +862,7 @@
   // ===== データ取得 =====
   async function loadData() {
     try {
-      var res = await fetch('/lily/api/sessions');
+      var res = await fetch('/lily/api/sessions?userId=' + encodeURIComponent(currentUserId));
       var data = await res.json();
       loadUsers();
     if (data.status === 'ok' && data.sessions && data.sessions.length > 0) {
