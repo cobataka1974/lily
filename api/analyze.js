@@ -104,10 +104,11 @@ async function analyzeWithClaude(transcript, sessionDate) {
   console.log('[analyze] Claude API で分析中...');
 
   const prompt = `以下は認知症のみつこさん（78歳）とAIリリーの会話記録です。
+会話日: ${sessionDate}
 以下のJSON形式で分析してください。
 
 {
-  "session_date": "YYYY-MM-DD",
+  "session_date": "${sessionDate}",
   "overall_mood": "良い／普通／悪い",
   "mood_reason": "一言説明",
   "highlight_moments": [

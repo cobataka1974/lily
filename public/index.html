@@ -614,26 +614,26 @@
     var callOverlay = document.getElementById('call-overlay');
 
     function acceptCallNow() {
-      // みつこさんがタップ → 即会話開始
+      // みつこさんがタップ → 音を鳴らしてから会話開始
       callOverlay.classList.remove('active');
       hideScreensaver();
       pageActivated = true;
       document.getElementById('ready-banner').classList.add('hidden');
-      if (!conversation) startConversation();
-    }
-
-    // しずかの声でお知らせ（音声終了後に即会話開始）
-    function playCallRing() {
+      // タップ後なのでiOSでも音声再生OK
       try {
-        var audio = new Audio('/lily/public/call-ring-v4.mp3');
+        var audio = new Audio('/lily/public/call-ring-v4.mp3?' + Date.now());
         audio.onended = function() {
-          // 音声が終わったらすぐボタン画面を表示（待ち時間ゼロ）
+          if (!conversation) startConversation();
         };
-        audio.play().catch(function(e) {
-          console.warn('[call-ring] 音声再生失敗:', e.message);
+        audio.play().then(function() {
+          console.log('[call-ring] 再生開始');
+        }).catch(function(e) {
+          console.warn('[call-ring] 再生失敗、直接会話開始:', e.message);
+          if (!conversation) startConversation();
         });
       } catch(e) {
-        console.warn('[call-ring] エラー:', e.message);
+        console.warn('[call-ring] エラー、直接会話開始:', e.message);
+        if (!conversation) startConversation();
       }
     }
 
@@ -645,8 +645,7 @@
         if (data.requested) {
           console.log('[call-now] 遠隔から会話開始コマンドを受信');
           hideScreensaver();
-          playCallRing(); // 静加の声で呼びかけ
-          // タップ待ちオーバーレイを表示（iOSのマイク制限を回避）
+          // タップ待ちオーバーレイを表示（タップ後に音→会話）
           callOverlay.classList.add('active');
         }
       } catch(e) {
