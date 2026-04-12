@@ -105,8 +105,9 @@ const scheduleHandler   = require('./api/schedule.js');
 const callNowHandler    = require('./api/call-now.js');
 const tokenHandler      = require('./api/token.js');
 const userConfigHandler  = require('./api/user-config.js');
-const voiceCloneHandler  = require('./api/voice-clone.js');
-const createAgentHandler = require('./api/create-agent.js');
+const voiceCloneHandler       = require('./api/voice-clone.js');
+const createAgentHandler      = require('./api/create-agent.js');
+const updateAgentVoiceHandler = require('./api/update-agent-voice.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -208,6 +209,11 @@ const server = http.createServer(async (req, res) => {
     const wrapped = makeResWrapper(res);
     await createAgentHandler(req2, wrapped);
     return;
+  }
+
+  // ===== POST /api/update-agent-voice =====
+  if (method === 'POST' && url === '/api/update-agent-voice') {
+    return updateAgentVoiceHandler(req, res);
   }
 
   // ===== POST /api/voice-clone =====

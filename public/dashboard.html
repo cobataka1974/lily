@@ -716,8 +716,17 @@
     <div class="modal-input-label">ElevenLabs Agent ID</div>
     <input class="modal-input" id="modal-user-agentId" type="text" placeholder="agent_xxxxxxxxx">
     <div class="modal-input-label">Voice ID（声のクローンID）</div>
-    <input class="modal-input" id="modal-user-voiceId" type="text" placeholder="ElevenLabsのVoice ID">
-    <div class="modal-input-label">PINコード（4桁）</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="modal-input" id="modal-user-voiceId" type="text" placeholder="ElevenLabsのVoice ID" style="flex:1;margin-bottom:0;">
+      <button id="voice-clone-btn" onclick="openVoiceClonePanel()" style="white-space:nowrap;padding:8px 12px;background:#e07b4f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">🎤 声を登録</button>
+    </div>
+    <div id="voice-clone-panel" style="display:none;margin-top:10px;padding:12px;background:#fff8f0;border-radius:10px;border:1px solid #e0c8b0;">
+      <div style="font-size:13px;color:#7a5c3a;margin-bottom:8px;">音声ファイルをアップロードして声をクローンします</div>
+      <input type="file" id="voice-file-input" accept="audio/*,video/*" style="font-size:13px;margin-bottom:8px;width:100%;">
+      <button onclick="uploadVoiceClone()" style="padding:8px 16px;background:#4caf50;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;width:100%;">🎵 クローン作成</button>
+      <div id="voice-clone-status" style="font-size:12px;color:#888;margin-top:6px;"></div>
+    </div>
+    <div class="modal-input-label" style="margin-top:10px;">PINコード（4桁）</div>
     <input class="modal-input" id="modal-user-pin" type="number" placeholder="1234">
     <div class="modal-input-label">システムプロンプト（省略可）</div>
     <textarea class="modal-input" id="modal-user-prompt" rows="3" placeholder="AIへの指示（空欄の場合はデフォルトを使用）"></textarea>
@@ -1024,6 +1033,7 @@
   }
 
   function renderUsers(users) {
+    window._userList = users; // 編集モーダルで参照するために保存
     var el = document.getElementById('user-list');
     if (!users.length) {
       el.innerHTML = '<div class="empty-state">ユーザーがいません</div>';
@@ -1044,13 +1054,50 @@
 
   function openUserModal(userId) {
     editingUserId = userId || null;
+    // 既存ユーザーの場合は現在の設定を読み込む
+    var existingUser = (window._userList || []).find(function(u){ return u.userId === userId; });
     document.getElementById('modal-user-id').value = userId || '';
-    document.getElementById('modal-user-name').value = '';
-    document.getElementById('modal-user-agentId').value = '';
-    document.getElementById('modal-user-voiceId').value = '';
-    document.getElementById('modal-user-pin').value = '';
-    document.getElementById('modal-user-prompt').value = '';
+    document.getElementById('modal-user-name').value = existingUser ? (existingUser.name || '') : '';
+    document.getElementById('modal-user-agentId').value = existingUser ? (existingUser.agentId || '') : '';
+    document.getElementById('modal-user-voiceId').value = existingUser ? (existingUser.voiceId || '') : '';
+    document.getElementById('modal-user-pin').value = existingUser ? (existingUser.pin || '') : '';
+    document.getElementById('modal-user-prompt').value = existingUser ? (existingUser.prompt || '') : '';
+    // 声クローンパネルをリセット
+    document.getElementById('voice-clone-panel').style.display = 'none';
+    document.getElementById('voice-clone-status').textContent = '';
     document.getElementById('user-modal-overlay').classList.add('open');
+  }
+
+  function openVoiceClonePanel() {
+    var panel = document.getElementById('voice-clone-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  }
+
+  async function uploadVoiceClone() {
+    var fileInput = document.getElementById('voice-file-input');
+    var statusEl = document.getElementById('voice-clone-status');
+    var userName = document.getElementById('modal-user-name').value.trim() || 'user';
+    if (!fileInput.files || !fileInput.files[0]) {
+      statusEl.textContent = '⚠️ ファイルを選択してください';
+      return;
+    }
+    statusEl.textContent = '⏳ アップロード中…';
+    var formData = new FormData();
+    formData.append('name', userName + '_clone_' + Date.now());
+    formData.append('files', fileInput.files[0], fileInput.files[0].name);
+    try {
+      var res = await fetch('/lily/api/voice-clone', { method: 'POST', body: formData });
+      var data = await res.json();
+      if (data.status === 'ok' && data.voiceId) {
+        document.getElementById('modal-user-voiceId').value = data.voiceId;
+        statusEl.textContent = '✅ 完成！Voice ID: ' + data.voiceId;
+        document.getElementById('voice-clone-panel').style.display = 'none';
+      } else {
+        statusEl.textContent = '⚠️ エラー: ' + (data.message || '失敗');
+      }
+    } catch(e) {
+      statusEl.textContent = '⚠️ ' + e.message;
+    }
   }
 
   function closeUserModal() {
@@ -1075,6 +1122,14 @@
       });
       var data = await res.json();
       if (data.status === 'ok') {
+        // voiceIdが変わっていればAgentにも反映
+        if (agentId && voiceId) {
+          await fetch('/lily/api/update-agent-voice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ agentId, voiceId }),
+          }).catch(function(){});
+        }
         closeUserModal();
         loadUsers();
         alert('保存しました！\n\nURL: https://bvjozroi.gensparkclaw.com/lily/?id=' + userId);
