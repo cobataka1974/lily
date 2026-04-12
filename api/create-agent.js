@@ -58,9 +58,9 @@ module.exports = async function handler(req, res) {
       },
       tts: {
         model_id: 'eleven_v3_conversational',
-        voice_id: voiceId || '2JoPnaUSkgU9bMhXXOUP',
-        expressive_mode: true,
-        stability: 0.5,
+        voice_id: voiceId || '9BWtsMINqrJLrRacOk9x', // デフォルト: Aria (multilingual female)
+        expressive_mode: false,
+        stability: 0.65,
         speed: 0.8,
         similarity_boost: 0.95,
         optimize_streaming_latency: 3,

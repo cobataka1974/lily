@@ -17,13 +17,12 @@
     .header-title { font-size: 22px; font-weight: 700; }
     .header-sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
 
-    /* ステップインジケーター */
     .steps {
       display: flex; justify-content: center;
       gap: 0; padding: 20px 16px 0;
     }
     .step-item {
-      flex: 1; max-width: 80px;
+      flex: 1; max-width: 70px;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
     .step-circle {
@@ -41,7 +40,6 @@
     }
     .step-line.done { background: #c06030; }
 
-    /* コンテンツ */
     .content { padding: 20px 16px 40px; max-width: 480px; margin: 0 auto; }
     .card {
       background: white; border-radius: 20px;
@@ -57,9 +55,6 @@
       display: block; font-size: 12px; font-weight: 700;
       color: #9a7860; margin-bottom: 6px;
     }
-    .field label .required {
-      color: #c06030; margin-left: 4px;
-    }
     .field input, .field textarea, .field select {
       width: 100%; padding: 12px 14px;
       border: 2px solid #e8cbb4; border-radius: 12px;
@@ -71,7 +66,6 @@
     }
     .field textarea { resize: vertical; min-height: 80px; }
 
-    /* ラジオ */
     .radio-group { display: flex; flex-direction: column; gap: 10px; }
     .radio-item {
       display: flex; align-items: center; gap: 10px;
@@ -82,7 +76,45 @@
     .radio-item input { width: auto; }
     .radio-item span { font-size: 14px; color: #5a3e2e; font-weight: 500; }
 
-    /* アップロード */
+    /* 同意チェックボックス */
+    .consent-box {
+      background: #fff8f0; border: 2px solid #e8c9a0;
+      border-radius: 14px; padding: 18px; margin-bottom: 14px;
+    }
+    .consent-box h3 { font-size: 14px; color: #c06030; margin-bottom: 10px; }
+    .consent-box p { font-size: 13px; color: #5a3e2e; line-height: 1.8; }
+    .consent-check {
+      display: flex; align-items: flex-start; gap: 12px;
+      margin-top: 12px; cursor: pointer;
+    }
+    .consent-check input[type=checkbox] {
+      width: 22px; height: 22px; flex-shrink: 0;
+      accent-color: #c06030; cursor: pointer; margin-top: 2px;
+    }
+    .consent-check span { font-size: 13px; color: #5a3e2e; line-height: 1.7; font-weight: 600; }
+    .consent-warn {
+      background: #fff0f0; border: 1px solid #f0b0b0;
+      border-radius: 10px; padding: 12px; margin-bottom: 14px;
+      font-size: 13px; color: #a03030; line-height: 1.7;
+    }
+
+    /* 声のアップロード */
+    .voice-method-tabs {
+      display: flex; gap: 8px; margin-bottom: 16px;
+    }
+    .voice-tab {
+      flex: 1; padding: 12px 8px; text-align: center;
+      border: 2px solid #e8cbb4; border-radius: 12px;
+      background: #fdf6ee; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: #9a7860;
+      transition: all 0.2s;
+    }
+    .voice-tab.active {
+      border-color: #c06030; background: #fff3ec; color: #c06030;
+    }
+    .voice-panel { display: none; }
+    .voice-panel.active { display: block; }
+
     .upload-area {
       border: 2px dashed #e8cbb4; border-radius: 16px;
       padding: 32px 20px; text-align: center;
@@ -94,11 +126,7 @@
     .upload-text { font-size: 15px; color: #7a5a40; font-weight: 500; }
     .upload-sub  { font-size: 12px; color: #b09880; margin-top: 6px; }
     .upload-input { display: none; }
-    .file-selected {
-      background: #e8f5e8; border-color: #60a060;
-      border-style: solid;
-    }
-    .file-selected .upload-icon::after { content: '✅'; }
+    .file-selected { background: #e8f5e8; border-color: #60a060; border-style: solid; }
 
     .skip-btn {
       width: 100%; padding: 12px;
@@ -106,8 +134,6 @@
       border: none; border-radius: 12px;
       font-size: 14px; cursor: pointer; margin-top: 12px;
     }
-
-    /* 声クローンボタン */
     .clone-btn {
       width: 100%; padding: 16px;
       background: linear-gradient(135deg, #c06030, #e07840);
@@ -116,12 +142,23 @@
       margin-top: 12px; transition: all 0.2s;
     }
     .clone-btn:disabled { background: #d4b896; cursor: default; }
-    .clone-status {
-      margin-top: 10px; text-align: center;
-      font-size: 13px; color: #9a7860; min-height: 20px;
+    .clone-status { margin-top: 10px; text-align: center; font-size: 13px; color: #9a7860; min-height: 20px; }
+
+    /* 通話録音パネル */
+    .call-record-box {
+      background: #f0f7ff; border: 2px solid #b0cce8;
+      border-radius: 14px; padding: 18px; margin-bottom: 14px;
+    }
+    .call-record-box h3 { font-size: 14px; color: #3a6a9a; margin-bottom: 10px; }
+    .call-record-box p { font-size: 13px; color: #5a5a7a; line-height: 1.8; }
+    .call-start-btn {
+      width: 100%; padding: 14px;
+      background: #3a6a9a; color: white;
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px;
     }
 
-    /* 確認画面 */
+    /* 確認・完成 */
     .summary-item {
       display: flex; gap: 10px;
       padding: 10px 0; border-bottom: 1px solid #f0e4d8;
@@ -129,16 +166,13 @@
     .summary-item:last-child { border-bottom: none; }
     .summary-label { font-size: 12px; color: #9a7860; min-width: 100px; }
     .summary-value { font-size: 14px; color: #5a3e2e; font-weight: 500; flex: 1; }
-
     .url-box {
       background: #fdf6ee; border: 2px solid #e8cbb4;
       border-radius: 12px; padding: 14px 16px;
       font-size: 13px; color: #c06030;
-      word-break: break-all; margin: 12px 0;
-      font-weight: 600;
+      word-break: break-all; margin: 12px 0; font-weight: 600;
     }
 
-    /* ナビゲーション */
     .nav { display: flex; gap: 10px; margin-top: 8px; }
     .btn-back {
       flex: 1; padding: 16px;
@@ -157,8 +191,7 @@
       width: 100%; padding: 16px;
       background: #c06030; color: white;
       border: none; border-radius: 14px;
-      font-size: 16px; font-weight: 700; cursor: pointer;
-      margin-top: 8px;
+      font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px;
     }
     .btn-copy {
       width: 100%; padding: 14px;
@@ -170,19 +203,21 @@
     .hidden { display: none; }
     .saving-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      display: none; align-items: center; justify-content: center;
-      z-index: 100;
+      display: none; align-items: center; justify-content: center; z-index: 100;
     }
-    .saving-overlay.active {
-      display: flex;
-    }
+    .saving-overlay.active { display: flex; }
     .saving-box {
-      background: white; border-radius: 20px;
-      padding: 32px 40px; text-align: center;
+      background: white; border-radius: 20px; padding: 32px 40px; text-align: center;
     }
     .saving-spinner { font-size: 40px; animation: spin 2s linear infinite; }
     .saving-text { font-size: 16px; color: #5a3e2e; margin-top: 12px; }
     @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+
+    .info-note {
+      font-size: 12px; color: #9a7860; line-height: 1.8;
+      background: #fdf6ee; border-radius: 10px; padding: 10px 12px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -195,7 +230,12 @@
 <!-- ステップインジケーター -->
 <div class="steps">
   <div class="step-item">
-    <div class="step-circle active" id="sc1">1</div>
+    <div class="step-circle active" id="sc0">同</div>
+    <div class="step-label">同意確認</div>
+  </div>
+  <div class="step-line" id="sl0"></div>
+  <div class="step-item">
+    <div class="step-circle" id="sc1">1</div>
     <div class="step-label">お相手の情報</div>
   </div>
   <div class="step-line" id="sl1"></div>
@@ -206,7 +246,7 @@
   <div class="step-line" id="sl2"></div>
   <div class="step-item">
     <div class="step-circle" id="sc3">3</div>
-    <div class="step-label">声のアップロード</div>
+    <div class="step-label">声の設定</div>
   </div>
   <div class="step-line" id="sl3"></div>
   <div class="step-item">
@@ -217,8 +257,59 @@
 
 <div class="content">
 
+  <!-- STEP 0: 同意確認 -->
+  <div id="step0">
+    <div class="card">
+      <div class="card-title">🔒 はじめにご確認ください</div>
+
+      <div class="consent-box">
+        <h3>📋 このサービスについて</h3>
+        <p>
+          このアプリは、AIが特定の人物の「声」や「話し方」を学習し、
+          会話相手として振る舞うサービスです。<br><br>
+          音声データはAI学習のみに使用し、第三者への提供は行いません。
+          登録した音声はいつでも削除できます。
+        </p>
+      </div>
+
+      <!-- 故人の声の場合 -->
+      <div class="consent-box" style="border-color:#d4a0a0;background:#fff5f5;">
+        <h3 style="color:#a03030;">⚠️ 故人の声を登録する場合</h3>
+        <p>
+          亡くなった方の声・話し方をAIに学習させる場合は、
+          <strong>その方が生前にこのような利用を承諾していたこと</strong>、
+          または<strong>遺族全員の同意を得ていること</strong>をご確認ください。<br><br>
+          故人の声を無断で使用することは、故人の尊厳を損なう可能性があります。
+        </p>
+      </div>
+
+      <!-- 同意チェック1 -->
+      <label class="consent-check">
+        <input type="checkbox" id="c1" onchange="checkAllConsent()">
+        <span>プライバシーポリシーに同意します。音声データがAI学習のみに使用されることを理解しました。</span>
+      </label>
+
+      <!-- 同意チェック2 -->
+      <label class="consent-check" style="margin-top:10px;">
+        <input type="checkbox" id="c2" onchange="checkAllConsent()">
+        <span>声を登録する方（または故人の場合は遺族）の承諾を得ています。</span>
+      </label>
+
+      <!-- 同意チェック3 -->
+      <label class="consent-check" style="margin-top:10px;">
+        <input type="checkbox" id="c3" onchange="checkAllConsent()">
+        <span>このサービスはAIであり、実際の人物ではないことを、会話する方（または介護者）が理解しています。</span>
+      </label>
+    </div>
+    <div class="nav">
+      <button class="btn-next" id="btn-consent-next" onclick="goStep(1)" disabled style="flex:1;">
+        同意して次へ →
+      </button>
+    </div>
+  </div>
+
   <!-- STEP 1 -->
-  <div id="step1">
+  <div id="step1" class="hidden">
     <div class="card">
       <div class="card-title">👴👵 会話する方の情報</div>
       <div class="field">
@@ -227,31 +318,32 @@
       </div>
       <div class="field">
         <label>年齢</label>
-        <input type="text" id="s1-age" placeholder="例：82歳">
+        <input type="number" id="s1-age" placeholder="例：82歳" min="0" max="120">
       </div>
       <div class="field">
         <label>出身地・住んでいた場所</label>
-        <input type="text" id="s1-place" placeholder="例：大阪市北区">
+        <input type="text" id="s1-location" placeholder="例：大阪市北区">
       </div>
       <div class="field">
         <label>好きな食べ物・趣味</label>
-        <input type="text" id="s1-hobby" placeholder="例：お茶漬け、園芸、読書">
+        <input type="text" id="s1-hobbies" placeholder="例：お茶漬け、園芸、読書">
       </div>
       <div class="field">
         <label>家族の名前（子・孫など）</label>
-        <textarea id="s1-family" placeholder="例：長男：たろう（55歳）、孫：さくら（10歳）"></textarea>
+        <input type="text" id="s1-family" placeholder="例：長男：たろう（55歳）、孫：さくら（10歳）">
       </div>
       <div class="field">
         <label>その他・特記事項</label>
-        <textarea id="s1-memo" placeholder="例：昔は料理が得意だった、猫が好き"></textarea>
+        <textarea id="s1-note" placeholder="例：昔は料理が得意だった、猫が好き"></textarea>
       </div>
       <div class="field">
         <label>ダッシュボードのPINコード（4桁）<span class="required">*</span></label>
-        <input type="number" id="s1-pin" placeholder="例：1234" maxlength="4" style="letter-spacing:0.3em;font-size:20px;">
-        <div style="font-size:11px;color:#b09880;margin-top:4px;">家族がダッシュボードにログインするための暗証番号です</div>
+        <input type="number" id="s1-pin" placeholder="例：1234" min="1000" max="9999">
+        <div class="info-note">家族がダッシュボードにログインするための暗証番号です</div>
       </div>
     </div>
     <div class="nav">
+      <button class="btn-back" onclick="goStep(0)">← 戻る</button>
       <button class="btn-next" onclick="goStep(2)">次へ →</button>
     </div>
   </div>
@@ -263,21 +355,17 @@
       <div class="field">
         <label>どんな人を演じますか？<span class="required">*</span></label>
         <div class="radio-group" id="relation-group">
-          <label class="radio-item" onclick="selectRelation(this, 'のご主人')">
-            <input type="radio" name="relation" value="のご主人">
-            <span>💑 故人のご主人・奥様</span>
+          <label class="radio-item" onclick="selectRelation(this, '💑 故人のご主人・奥様')">
+            <input type="radio" name="relation" value="💑 故人のご主人・奥様"> <span>💑 故人のご主人・奥様</span>
           </label>
-          <label class="radio-item" onclick="selectRelation(this, 'の子ども')">
-            <input type="radio" name="relation" value="の子ども">
-            <span>👨‍👩‍👧 遠くに住む子ども</span>
+          <label class="radio-item" onclick="selectRelation(this, '👨‍👩‍👧 遠くに住む子ども')">
+            <input type="radio" name="relation" value="👨‍👩‍👧 遠くに住む子ども"> <span>👨‍👩‍👧 遠くに住む子ども</span>
           </label>
-          <label class="radio-item" onclick="selectRelation(this, 'の昔の友人')">
-            <input type="radio" name="relation" value="の昔の友人">
-            <span>👫 昔の友人</span>
+          <label class="radio-item" onclick="selectRelation(this, '👫 昔の友人')">
+            <input type="radio" name="relation" value="👫 昔の友人"> <span>👫 昔の友人</span>
           </label>
-          <label class="radio-item" onclick="selectRelation(this, 'の')">
-            <input type="radio" name="relation" value="その他">
-            <span>✏️ その他</span>
+          <label class="radio-item" onclick="selectRelation(this, '✏️ その他')">
+            <input type="radio" name="relation" value="✏️ その他"> <span>✏️ その他</span>
           </label>
         </div>
       </div>
@@ -287,7 +375,18 @@
       </div>
       <div class="field">
         <label>どんな呼ばれ方をしていましたか？</label>
-        <input type="text" id="s2-called" placeholder="例：おとうさん、パパ、たけちゃん">
+        <input type="text" id="s2-callname" placeholder="例：おとうさん、パパ、たけちゃん">
+      </div>
+      <div class="field">
+        <label>その方の性別</label>
+        <div class="radio-group" id="gender-group">
+          <label class="radio-item" onclick="selectGender(this,'female')" id="gender-female">
+            <input type="radio" name="gender" value="female"> <span>👩 女性</span>
+          </label>
+          <label class="radio-item" onclick="selectGender(this,'male')" id="gender-male">
+            <input type="radio" name="gender" value="male"> <span>👨 男性</span>
+          </label>
+        </div>
       </div>
       <div class="field">
         <label>話し方の特徴（任意）</label>
@@ -300,72 +399,102 @@
     </div>
   </div>
 
-  <!-- STEP 3 -->
+  <!-- STEP 3: 声の設定 -->
   <div id="step3" class="hidden">
     <div class="card">
       <div class="card-title">🎤 声の登録</div>
-      <p style="font-size:13px;color:#7a5a40;margin-bottom:16px;line-height:1.7;">
+
+      <p style="font-size:14px;color:#7a5a40;margin-bottom:16px;line-height:1.8;">
         その方の声を登録すると、AIがその声でお話しします。<br>
-        <strong>スマホで録音した音声（30秒〜3分）が一番うまくいきます。</strong>
+        <strong>声の登録は任意です。登録しなくてもご利用いただけます。</strong>
       </p>
 
-      <!-- 録音原稿 -->
-      <div style="background:#fff8f0;border:1px solid #e8c9a0;border-radius:12px;padding:16px;margin-bottom:16px;">
-        <div style="font-size:14px;font-weight:700;color:#c06030;margin-bottom:10px;">📝 録音用の原稿</div>
-        <div style="font-size:13px;color:#555;line-height:2.0;background:#fff;border-radius:8px;padding:14px;border:1px solid #e8d0b0;">
-          はい、もしもし。わかった、わかった。うん、大丈夫だよ。<br><br>
-          今日はね、天気がよかったから、ちょっと散歩してきたんだよ。気持ちよかったよ。<br><br>
-          そうそう、昨日の夜ごはん、美味しかったね。また作ってよ。<br><br>
-          あのね、昔のことを思い出してたんだけど、あの頃は楽しかったなあ。<br><br>
-          うん、うん。そうだよ。心配しなくていいよ。ちゃんとそこにいるから。<br><br>
-          じゃあ、またね。元気でいてよ。
+      <!-- 方法タブ -->
+      <div class="voice-method-tabs">
+        <div class="voice-tab active" onclick="switchVoiceTab('file')" id="tab-file">📁 ファイルから</div>
+        <div class="voice-tab" onclick="switchVoiceTab('call')" id="tab-call">📞 通話で収録</div>
+        <div class="voice-tab" onclick="switchVoiceTab('skip')" id="tab-skip">⏭ スキップ</div>
+      </div>
+
+      <!-- パネル1: ファイルアップロード -->
+      <div class="voice-panel active" id="panel-file">
+        <div style="background:#fff8f0;border:1px solid #e8c9a0;border-radius:12px;padding:16px;margin-bottom:14px;">
+          <div style="font-size:14px;font-weight:700;color:#c06030;margin-bottom:10px;">📝 録音用の原稿（参考）</div>
+          <div style="font-size:13px;color:#555;line-height:2.0;background:#fff;border-radius:8px;padding:14px;border:1px solid #e8d0b0;">
+            はい、もしもし。わかった、わかった。うん、大丈夫だよ。<br><br>
+            今日はね、天気がよかったから、ちょっと散歩してきたんだよ。気持ちよかったよ。<br><br>
+            そうそう、昨日の夜ごはん、美味しかったね。また作ってよ。<br><br>
+            あのね、昔のことを思い出してたんだけど、あの頃は楽しかったなあ。<br><br>
+            うん、うん。そうだよ。心配しなくていいよ。ちゃんとそこにいるから。<br><br>
+            じゃあ、またね。元気でいてよ。
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:#888;line-height:1.8;">
+            💡 <strong>録音のコツ</strong>：静かな部屋・マイクから10〜20cm・ゆっくり自然な声で<br>
+            📁 <strong>既存ファイルもOK</strong>：電話録音・ビデオ・ボイスメモなど（mp3/mp4/m4a/wav、最大50MB）
+          </div>
         </div>
-        <div style="margin-top:10px;font-size:12px;color:#888;line-height:1.8;">
-          💡 <strong>録音のコツ</strong><br>
-          ・静かな部屋で録音する<br>
-          ・マイクを口から10〜20cmくらい離す<br>
-          ・ゆっくり、自然な声で読む<br>
-          ・途中で止まっても大丈夫です
+
+        <div class="upload-area" id="upload-area"
+             onclick="document.getElementById('file-input').click()"
+             ondragover="onDragOver(event)"
+             ondragleave="onDragLeave(event)"
+             ondrop="onDrop(event)">
+          <div class="upload-icon">🎵</div>
+          <div class="upload-text">ここをタップしてファイルを選択</div>
+          <div class="upload-sub">音声・動画ファイル（最大50MB）</div>
+        </div>
+        <input type="file" id="file-input" class="upload-input"
+               accept="audio/*,video/*" onchange="onFileSelected(this)">
+        <div id="file-name" style="margin-top:10px;font-size:13px;color:#c06030;font-weight:600;"></div>
+
+        <button class="clone-btn" id="clone-btn" onclick="createVoiceClone()" disabled>
+          🎤 この声でクローンを作成する
+        </button>
+        <div class="clone-status" id="clone-status"></div>
+      </div>
+
+      <!-- パネル2: 通話録音 -->
+      <div class="voice-panel" id="panel-call">
+        <div class="call-record-box">
+          <h3>📞 通話しながら声を収録する方法</h3>
+          <p>
+            「会話を始める」ボタンを押すと、AIが会話を始めます。<br>
+            その方に自然にお話しいただいている間に、<strong>バックグラウンドで声を自動収録</strong>します。<br><br>
+            収録が完了したら自動的にクローンを作成します。<br>
+            <strong>「録音しています」と意識させる必要はありません。</strong>
+          </p>
+          <div style="margin-top:12px;font-size:12px;color:#6a6a9a;line-height:1.8;">
+            ⚠️ 通話録音を行う前に、録音対象の方（または同席の介護者）から<br>
+            　　声を使用することの同意を口頭で得てください。
+          </div>
+        </div>
+        <div id="call-record-status" style="text-align:center;font-size:13px;color:#3a6a9a;min-height:20px;margin-bottom:8px;"></div>
+        <button class="call-start-btn" id="call-record-btn" onclick="startCallRecording()">
+          📞 通話しながら声を収録する
+        </button>
+        <div style="margin-top:12px;font-size:12px;color:#9a7860;text-align:center;">
+          ※ 約2〜3分の会話で十分な音声が収集されます
         </div>
       </div>
 
-      <!-- 既存音声がある場合 -->
-      <div style="background:#f0f7ff;border:1px solid #b0cce8;border-radius:12px;padding:14px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:#3a6a9a;margin-bottom:6px;">📁 既存の音声・動画ファイルでもOK</div>
-        <div style="font-size:12px;color:#666;line-height:1.7;">
-          電話の録音、ビデオ通話の動画、ボイスメモなど<br>
-          その方の声が入っていれば何でも使えます。<br>
-          対応形式：mp3, mp4, m4a, wav, mov など（最大50MB）
+      <!-- パネル3: スキップ -->
+      <div class="voice-panel" id="panel-skip">
+        <div style="background:#f0f0f0;border-radius:14px;padding:20px;text-align:center;">
+          <div style="font-size:40px;margin-bottom:12px;">🎵</div>
+          <div style="font-size:15px;font-weight:700;color:#5a5a5a;margin-bottom:8px;">
+            デフォルトの声を使用します
+          </div>
+          <div style="font-size:13px;color:#7a7a7a;line-height:1.8;" id="default-voice-desc">
+            選択した性別に合った自然な日本語の声が設定されます。<br>
+            声の登録はセットアップ後にダッシュボードからも行えます。
+          </div>
         </div>
       </div>
 
-      <div class="upload-area" id="upload-area"
-           onclick="document.getElementById('file-input').click()"
-           ondragover="onDragOver(event)"
-           ondragleave="onDragLeave(event)"
-           ondrop="onDrop(event)">
-        <div class="upload-icon">🎵</div>
-        <div class="upload-text">ここをタップしてファイルを選択</div>
-        <div class="upload-sub">録音ファイルまたは動画ファイル（最大50MB）</div>
-      </div>
-      <input type="file" id="file-input" class="upload-input"
-             accept="audio/*,video/*"
-             onchange="onFileSelected(this)">
-
-      <div id="file-name" style="margin-top:10px;font-size:13px;color:#c06030;font-weight:600;"></div>
-
-      <button class="clone-btn" id="clone-btn" onclick="createVoiceClone()" disabled>
-        🎤 この声でクローンを作成する
-      </button>
-      <div class="clone-status" id="clone-status"></div>
-
-      <button class="skip-btn" onclick="skipVoice()">
-        声はない・後で設定する（デフォルトの声を使用）
-      </button>
     </div>
     <div class="nav">
       <button class="btn-back" onclick="goStep(2)">← 戻る</button>
-      <button class="btn-next" id="step3-next" onclick="goStep(4)" disabled>次へ →</button>
+      <button class="btn-next" id="step3-next" onclick="goStep(4)">次へ →</button>
     </div>
   </div>
 
@@ -383,8 +512,8 @@
       </p>
       <div class="url-box" id="result-url"></div>
       <button class="btn-copy" onclick="copyUrl()">📋 URLをコピー</button>
-      <a href="/lily/dashboard" style="display:block;margin-top:10px;">
-        <button class="btn-full" style="background:#7a5a40;">ダッシュボードへ →</button>
+      <a id="dashboard-link" href="/lily/dashboard" style="display:block;margin-top:10px;">
+        <button class="btn-full" style="background:#7a5a40;">📊 ダッシュボードへ →</button>
       </a>
     </div>
 
@@ -397,7 +526,7 @@
 </div>
 
 <!-- 保存中オーバーレイ -->
-<div class="saving-overlay hidden" id="saving-overlay">
+<div class="saving-overlay" id="saving-overlay">
   <div class="saving-box">
     <div class="saving-spinner">🌸</div>
     <div class="saving-text" id="saving-text">保存中です…</div>
@@ -405,14 +534,80 @@
 </div>
 
 <script>
-  var currentStep = 1;
+  var currentStep = 0;
   var selectedRelation = '';
+  var selectedGender = '';
   var clonedVoiceId = '';
   var selectedFile = null;
   var finalUrl = '';
+  var voiceMethod = 'file'; // 'file' | 'call' | 'skip'
+  var callRecordingActive = false;
+  var callRecordedAudioBlob = null;
+
+  // デフォルト声（性別別）
+  var DEFAULT_VOICES = {
+    female: '9BWtsMINqrJLrRacOk9x', // Aria (multilingual female)
+    male:   'JBFqnCBsd6RMkjVDRZzb', // George (warm British male, multilingual)
+    none:   '9BWtsMINqrJLrRacOk9x'  // fallback
+  };
+
+  // ===== 同意 =====
+  function checkAllConsent() {
+    var ok = document.getElementById('c1').checked &&
+             document.getElementById('c2').checked &&
+             document.getElementById('c3').checked;
+    document.getElementById('btn-consent-next').disabled = !ok;
+  }
+
+  // ===== 性別選択 =====
+  function selectGender(el, val) {
+    selectedGender = val;
+    document.querySelectorAll('#gender-group .radio-item').forEach(function(r) {
+      r.classList.remove('selected');
+    });
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+    updateDefaultVoiceDesc();
+  }
+  function updateDefaultVoiceDesc() {
+    var desc = document.getElementById('default-voice-desc');
+    if (!desc) return;
+    if (selectedGender === 'male') {
+      desc.innerHTML = '落ち着いた男性の声（George）が設定されます。<br>声の登録はセットアップ後にダッシュボードからも行えます。';
+    } else if (selectedGender === 'female') {
+      desc.innerHTML = '自然な女性の声（Aria）が設定されます。<br>声の登録はセットアップ後にダッシュボードからも行えます。';
+    } else {
+      desc.innerHTML = '選択した性別に合った声が設定されます。<br>声の登録はセットアップ後にダッシュボードからも行えます。';
+    }
+  }
+
+  // ===== 関係選択 =====
+  function selectRelation(el, val) {
+    selectedRelation = val;
+    document.querySelectorAll('#relation-group .radio-item').forEach(function(r) {
+      r.classList.remove('selected');
+    });
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+  }
+
+  // ===== 声タブ切替 =====
+  function switchVoiceTab(tab) {
+    voiceMethod = tab;
+    ['file','call','skip'].forEach(function(t) {
+      document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+      document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+    });
+    updateDefaultVoiceDesc();
+  }
 
   // ===== ステップ移動 =====
   function goStep(n) {
+    if (n === 1 && currentStep === 0) {
+      if (document.getElementById('btn-consent-next').disabled) {
+        alert('すべての項目にチェックを入れてください'); return;
+      }
+    }
     if (n === 2 && !document.getElementById('s1-name').value.trim()) {
       alert('お名前を入力してください'); return;
     }
@@ -421,158 +616,211 @@
     }
     if (n === 4) buildSummary();
 
-    document.getElementById('step' + currentStep).classList.add('hidden');
-    document.getElementById('step' + n).classList.remove('hidden');
+    var ids = ['step0','step1','step2','step3','step4'];
+    ids.forEach(function(id) { document.getElementById(id).classList.add('hidden'); });
+    document.getElementById('step'+n).classList.remove('hidden');
+    currentStep = n;
 
     // インジケーター更新
-    for (var i = 1; i <= 4; i++) {
-      var c = document.getElementById('sc' + i);
+    var circles = ['sc0','sc1','sc2','sc3','sc4'];
+    circles.forEach(function(id, i) {
+      var c = document.getElementById(id);
       c.className = 'step-circle' + (i < n ? ' done' : i === n ? ' active' : '');
-      if (i < 4) {
-        var l = document.getElementById('sl' + i);
-        if (l) l.className = 'step-line' + (i < n ? ' done' : '');
-      }
-    }
-    currentStep = n;
-    window.scrollTo(0, 0);
+    });
+    var lines = ['sl0','sl1','sl2','sl3'];
+    lines.forEach(function(id, i) {
+      var el = document.getElementById(id);
+      if (el) el.className = 'step-line' + (i < n ? ' done' : '');
+    });
+    window.scrollTo(0,0);
   }
 
-  // ===== ラジオ選択 =====
-  function selectRelation(el, val) {
-    document.querySelectorAll('.radio-item').forEach(function(r) { r.classList.remove('selected'); });
-    el.classList.add('selected');
-    selectedRelation = val;
-  }
-
-  // ===== ファイル選択 =====
-  function onFileSelected(input) {
-    if (!input.files || !input.files[0]) return;
-    selectedFile = input.files[0];
-    document.getElementById('file-name').textContent = '📎 ' + selectedFile.name;
-    document.getElementById('upload-area').classList.add('file-selected');
-    document.getElementById('clone-btn').disabled = false;
-    document.getElementById('step3-next').disabled = false; // スキップ可
-  }
-
+  // ===== ファイル操作 =====
   function onDragOver(e) { e.preventDefault(); document.getElementById('upload-area').classList.add('drag'); }
   function onDragLeave(e) { document.getElementById('upload-area').classList.remove('drag'); }
   function onDrop(e) {
     e.preventDefault();
     document.getElementById('upload-area').classList.remove('drag');
-    var file = e.dataTransfer.files[0];
-    if (file) {
-      selectedFile = file;
-      document.getElementById('file-name').textContent = '📎 ' + file.name;
-      document.getElementById('upload-area').classList.add('file-selected');
-      document.getElementById('clone-btn').disabled = false;
-      document.getElementById('step3-next').disabled = false;
-    }
+    var f = e.dataTransfer.files[0];
+    if (f) processFile(f);
+  }
+  function onFileSelected(input) {
+    if (input.files && input.files[0]) processFile(input.files[0]);
+  }
+  function processFile(f) {
+    selectedFile = f;
+    document.getElementById('file-name').textContent = '✅ ' + f.name + ' (' + (f.size/1024/1024).toFixed(1) + 'MB)';
+    document.getElementById('upload-area').classList.add('file-selected');
+    document.getElementById('clone-btn').disabled = false;
+    document.getElementById('clone-status').textContent = '';
   }
 
-  // ===== 声クローン作成 =====
+  // ===== 声クローン作成（ファイル） =====
   async function createVoiceClone() {
     if (!selectedFile) return;
     var btn = document.getElementById('clone-btn');
     var status = document.getElementById('clone-status');
     btn.disabled = true;
-    btn.textContent = '⏳ クローン作成中…（1〜2分かかります）';
-    status.textContent = 'ElevenLabsにアップロード中…';
-
-    var aiName = document.getElementById('s2-ainame').value.trim() || 'AI';
-    var formData = new FormData();
-    formData.append('name', aiName + '_clone_' + Date.now());
-    formData.append('files', selectedFile, selectedFile.name);
+    btn.textContent = '🔄 クローン作成中…（30秒ほどかかります）';
+    status.textContent = '';
 
     try {
-      var res = await fetch('/lily/api/voice-clone', {
-        method: 'POST',
-        body: formData,
-      });
+      var fd = new FormData();
+      var aiName = document.getElementById('s2-ainame').value.trim() || 'voice';
+      fd.append('name', aiName + '_clone');
+      fd.append('files', selectedFile);
+
+      var res = await fetch('/lily/api/voice-clone', { method: 'POST', body: fd });
       var data = await res.json();
+
       if (data.status === 'ok' && data.voiceId) {
         clonedVoiceId = data.voiceId;
-        btn.textContent = '✅ 声クローン完成！';
-        status.textContent = 'Voice ID: ' + clonedVoiceId;
-        document.getElementById('step3-next').disabled = false;
+        status.textContent = '✅ 声のクローンが完成しました！';
+        status.style.color = '#60a060';
+        btn.textContent = '✅ 声クローン完成';
       } else {
-        throw new Error(data.message || 'クローン作成失敗');
+        status.textContent = '⚠️ ' + (data.message || '作成に失敗しました');
+        status.style.color = '#c06030';
+        btn.textContent = '🎤 もう一度試す';
+        btn.disabled = false;
       }
     } catch(e) {
+      status.textContent = '⚠️ 通信エラーが発生しました';
+      status.style.color = '#c06030';
+      btn.textContent = '🎤 もう一度試す';
       btn.disabled = false;
-      btn.textContent = '🎤 この声でクローンを作成する';
-      status.textContent = '⚠️ エラー: ' + e.message;
     }
   }
 
-  // ===== 声スキップ =====
-  function skipVoice() {
-    clonedVoiceId = '';
-    document.getElementById('step3-next').disabled = false;
-    goStep(4);
+  // ===== 通話録音で声収録 =====
+  var mediaRecorder = null;
+  var recordedChunks = [];
+
+  async function startCallRecording() {
+    var btn = document.getElementById('call-record-btn');
+    var statusEl = document.getElementById('call-record-status');
+
+    if (callRecordingActive) {
+      // 停止
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      callRecordingActive = false;
+      btn.textContent = '📞 通話しながら声を収録する';
+      return;
+    }
+
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordedChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+      mediaRecorder.onstop = async function() {
+        stream.getTracks().forEach(t => t.stop());
+        var blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        callRecordedAudioBlob = blob;
+        var sizeMB = (blob.size/1024/1024).toFixed(1);
+        statusEl.textContent = '✅ ' + sizeMB + 'MBの音声を収録しました。クローン作成中…';
+
+        // 自動でクローン作成
+        var fd = new FormData();
+        var aiName = document.getElementById('s2-ainame').value.trim() || 'voice';
+        fd.append('name', aiName + '_call_clone');
+        fd.append('files', blob, 'recording.webm');
+
+        try {
+          var res = await fetch('/lily/api/voice-clone', { method: 'POST', body: fd });
+          var data = await res.json();
+          if (data.status === 'ok' && data.voiceId) {
+            clonedVoiceId = data.voiceId;
+            statusEl.textContent = '🎉 声のクローンが完成しました！';
+            statusEl.style.color = '#60a060';
+            btn.textContent = '✅ 収録・クローン完成';
+          } else {
+            statusEl.textContent = '⚠️ クローン作成に失敗: ' + (data.message || '');
+            statusEl.style.color = '#c06030';
+            btn.textContent = '📞 もう一度試す';
+          }
+        } catch(e) {
+          statusEl.textContent = '⚠️ 通信エラー: ' + e.message;
+          statusEl.style.color = '#c06030';
+          btn.textContent = '📞 もう一度試す';
+        }
+        callRecordingActive = false;
+      };
+
+      mediaRecorder.start(1000); // 1秒ごとにデータ収集
+      callRecordingActive = true;
+      btn.textContent = '⏹ 収録を終了する';
+      statusEl.textContent = '🔴 録音中… 自然にお話しください（2〜3分が目安）';
+      statusEl.style.color = '#c03030';
+
+    } catch(e) {
+      statusEl.textContent = '⚠️ マイクへのアクセスが拒否されました: ' + e.message;
+      statusEl.style.color = '#c06030';
+    }
   }
 
-  // ===== サマリー構築 =====
+  // ===== 確認サマリー生成 =====
   function buildSummary() {
-    var name    = document.getElementById('s1-name').value.trim();
-    var age     = document.getElementById('s1-age').value.trim();
-    var place   = document.getElementById('s1-place').value.trim();
-    var hobby   = document.getElementById('s1-hobby').value.trim();
-    var family  = document.getElementById('s1-family').value.trim();
-    var memo    = document.getElementById('s1-memo').value.trim();
-    var aiName  = document.getElementById('s2-ainame').value.trim();
-    var called  = document.getElementById('s2-called').value.trim();
-    var style   = document.getElementById('s2-style').value.trim();
+    var name     = document.getElementById('s1-name').value.trim();
+    var age      = document.getElementById('s1-age').value.trim();
+    var location = document.getElementById('s1-location').value.trim();
+    var hobbies  = document.getElementById('s1-hobbies').value.trim();
+    var family   = document.getElementById('s1-family').value.trim();
+    var aiName   = document.getElementById('s2-ainame').value.trim();
+    var callName = document.getElementById('s2-callname').value.trim();
+    var style    = document.getElementById('s2-style').value.trim();
+    var genderLabel = selectedGender === 'male' ? '👨 男性' : selectedGender === 'female' ? '👩 女性' : '未選択';
+    var voiceLabel = clonedVoiceId
+      ? '✅ 声クローン登録済み'
+      : (voiceMethod === 'skip' ? '（デフォルト・' + genderLabel + '）' : '（デフォルト）');
 
-    var items = [
+    var html = [
       ['会話する方のお名前', name],
       ['年齢', age || '未入力'],
-      ['出身地', place || '未入力'],
-      ['好きなもの', hobby || '未入力'],
+      ['出身地', location || '未入力'],
+      ['好きなもの', hobbies || '未入力'],
       ['家族', family || '未入力'],
       ['AIの名前', aiName],
-      ['AIの関係', selectedRelation || '未選択'],
-      ['呼ばれ方', called || '未入力'],
-      ['声クローン', clonedVoiceId ? '✅ 作成済み (' + clonedVoiceId + ')' : '（デフォルト）'],
-    ];
-
-    var html = items.map(function(it) {
-      return '<div class="summary-item"><div class="summary-label">' + it[0] + '</div><div class="summary-value">' + it[1] + '</div></div>';
+      ['AIの関係', selectedRelation.replace(/^[^\s]+\s/,'') || '未選択'],
+      ['呼ばれ方', callName || '未入力'],
+      ['話し方', style || '未入力'],
+      ['性別', genderLabel],
+      ['声クローン', voiceLabel],
+    ].map(function(item) {
+      return '<div class="summary-item"><div class="summary-label">' + item[0] +
+             '</div><div class="summary-value">' + item[1] + '</div></div>';
     }).join('');
     document.getElementById('summary-list').innerHTML = html;
   }
 
-  // ===== システムプロンプト自動生成 =====
+  // ===== プロンプト生成 =====
   function buildPrompt() {
-    var name    = document.getElementById('s1-name').value.trim();
-    var age     = document.getElementById('s1-age').value.trim();
-    var place   = document.getElementById('s1-place').value.trim();
-    var hobby   = document.getElementById('s1-hobby').value.trim();
-    var family  = document.getElementById('s1-family').value.trim();
-    var memo    = document.getElementById('s1-memo').value.trim();
-    var aiName  = document.getElementById('s2-ainame').value.trim();
-    var called  = document.getElementById('s2-called').value.trim();
-    var style   = document.getElementById('s2-style').value.trim();
-    var rel     = selectedRelation || 'の大切な人';
+    var name     = document.getElementById('s1-name').value.trim();
+    var age      = document.getElementById('s1-age').value.trim();
+    var location = document.getElementById('s1-location').value.trim();
+    var hobbies  = document.getElementById('s1-hobbies').value.trim();
+    var family   = document.getElementById('s1-family').value.trim();
+    var note     = document.getElementById('s1-note').value.trim();
+    var aiName   = document.getElementById('s2-ainame').value.trim();
+    var callName = document.getElementById('s2-callname').value.trim();
+    var relation = selectedRelation.replace(/^[^\s]+\s/,'');
+    var style    = document.getElementById('s2-style').value.trim();
 
-    return 'あなたの名前は「' + aiName + '」です。' + name + 'さん' + rel + 'です。\n'
-      + (called ? name + 'さんから「' + called + '」など、どう呼ばれてもかまいません。自然に応えてください。\n\n' : '\n')
-      + '【話し方の絶対ルール】\n'
-      + '・ゆっくり、はっきり、短く話す\n'
-      + '・1回の発言は必ず1〜2文以内。句点（。）で明確に終わる\n'
-      + '・質問は1回に1つだけ\n'
-      + '・同じ話を繰り返されても初めて聞くように応える\n'
-      + '・記憶が違っていても否定しない。話に乗る\n'
-      + '・「認知症」「物忘れ」という言葉は絶対に使わない\n'
-      + (style ? '・話し方の特徴：' + style + '\n' : '')
-      + '\n【' + name + 'さんのプロフィール】\n'
-      + (age     ? '・年齢：' + age + '\n' : '')
-      + (place   ? '・出身地：' + place + '\n' : '')
-      + (hobby   ? '・好きなもの：' + hobby + '\n' : '')
-      + (family  ? '・家族：' + family + '\n' : '')
-      + (memo    ? '・' + memo + '\n' : '')
-      + '\n【禁止事項】\n'
-      + '・ニュース・政治・将来の不安を煽る話\n'
-      + '・複雑な選択肢の提示・長い説明・急かすような言葉';
+    return [
+      'あなたの名前は「' + aiName + '」です。' + name + 'さんの' + (relation || '大切な人') + 'として会話します。',
+      callName ? name + 'さんからは「' + callName + '」と呼ばれていました。' : '',
+      age ? name + 'さんは' + age + '歳です。' : '',
+      location ? '出身・縁の地は' + location + 'です。' : '',
+      hobbies ? '好きなものや趣味：' + hobbies + '。' : '',
+      family ? '家族について：' + family + '。' : '',
+      note ? '特記事項：' + note : '',
+      style ? '話し方の特徴：' + style + '。' : '',
+      'ゆっくり、温かく、やさしい言葉でお話しください。',
+      '感情タグ（[happy][笑う]など）は使わないでください。',
+      '短い返答を心がけ、一度に一つの話題にしてください。',
+    ].filter(Boolean).join('\n');
   }
 
   // ===== ユーザーID生成 =====
@@ -596,17 +844,19 @@
 
     var pin = String(document.getElementById('s1-pin').value).replace(/\D/g,'').slice(0,4);
     if (!pin || pin.length < 4) { alert('PINコードを4桁で入力してください'); return; }
+
+    // 声IDの決定
+    var voiceId = clonedVoiceId || DEFAULT_VOICES[selectedGender] || DEFAULT_VOICES.none;
+
     var userId = generateUserId(name);
     var prompt = buildPrompt();
-    var voiceId = clonedVoiceId || '2JoPnaUSkgU9bMhXXOUP'; // デフォルト=しずか
 
     document.getElementById('saving-overlay').classList.add('active');
     document.getElementById('saving-text').textContent = 'AIエージェントを作成中…（30秒ほどかかります）';
 
     try {
-      // Step A: ElevenLabs Agentを自動作成
+      // Agent作成
       var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4'; // フォールバック
-      var aiName = document.getElementById('s2-ainame').value.trim();
       try {
         var agentRes = await fetch('/lily/api/create-agent', {
           method: 'POST',
@@ -619,30 +869,18 @@
           }),
         });
         var agentData = await agentRes.json();
-        if (agentData.status === 'ok') {
-          agentId = agentData.agentId;
-        }
-      } catch(e) {
-        console.warn('Agent作成失敗（デフォルト使用）:', e.message);
-      }
+        if (agentData.status === 'ok') agentId = agentData.agentId;
+      } catch(e) { console.warn('Agent作成失敗:', e.message); }
 
       document.getElementById('saving-text').textContent = 'ユーザー情報を保存中…';
 
-      // Step B: ユーザー情報を保存
       var controller = new AbortController();
       var timer = setTimeout(function() { controller.abort(); }, 10000);
       var res = await fetch('/lily/api/user-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({
-          userId:  userId,
-          name:    name,
-          agentId: agentId,
-          voiceId: voiceId,
-          pin:     pin,
-          prompt:  prompt,
-        }),
+        body: JSON.stringify({ userId, name, agentId, voiceId, pin, prompt }),
       });
       clearTimeout(timer);
       var data = await res.json();
@@ -657,21 +895,24 @@
           '<br><br>🔑 PIN：' + pin;
         document.getElementById('result-card').style.display = 'block';
         document.getElementById('confirm-nav').style.display = 'none';
+        document.getElementById('dashboard-link').href = dashUrl;
         document.getElementById('summary-list').insertAdjacentHTML('beforebegin',
-          '<p style="font-size:14px;color:#c06030;font-weight:700;margin-bottom:12px;">ユーザーID: ' + userId + '</p>');
+          '<div style="background:#e8f5e8;border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#4a8a4a;font-weight:700;">🎉 ユーザーID: ' + userId + '</div>');
       } else {
-        alert('保存に失敗しました: ' + data.message);
+        alert('保存に失敗しました: ' + (data.message || JSON.stringify(data)));
       }
     } catch(e) {
       document.getElementById('saving-overlay').classList.remove('active');
-      alert('エラー: ' + e.message);
+      alert('エラーが発生しました: ' + e.message);
     }
   }
 
   function copyUrl() {
-    navigator.clipboard.writeText(finalUrl).then(function() {
-      alert('URLをコピーしました！');
-    });
+    if (navigator.clipboard && finalUrl) {
+      navigator.clipboard.writeText(finalUrl).then(function() {
+        alert('URLをコピーしました！');
+      });
+    }
   }
 </script>
 </body>

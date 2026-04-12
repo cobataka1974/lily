@@ -108,6 +108,7 @@ const userConfigHandler  = require('./api/user-config.js');
 const voiceCloneHandler       = require('./api/voice-clone.js');
 const createAgentHandler      = require('./api/create-agent.js');
 const updateAgentVoiceHandler = require('./api/update-agent-voice.js');
+const recordVoiceHandler      = require('./api/record-voice.js');
 
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
@@ -217,6 +218,23 @@ const server = http.createServer(async (req, res) => {
   // ===== POST /api/update-agent-voice =====
   if (method === 'POST' && url === '/api/update-agent-voice') {
     return updateAgentVoiceHandler(req, res);
+  }
+
+  // ===== /api/record-voice/* =====
+  if (url.startsWith('/api/record-voice')) {
+    // /chunk はバイナリストリームそのまま渡す（readBodyしない）
+    if (url.includes('/chunk')) {
+      const req2 = Object.assign(req, { method, url });
+      const wrapped = makeResWrapper(res);
+      await recordVoiceHandler(req2, wrapped);
+      return;
+    }
+    // start / finish / status はJSONボディを先読み
+    const body = method === 'POST' ? await readBody(req) : {};
+    const req2 = Object.assign(req, { method, body, url });
+    const wrapped = makeResWrapper(res);
+    await recordVoiceHandler(req2, wrapped);
+    return;
   }
 
   // ===== POST /api/voice-clone =====
