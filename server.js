@@ -112,8 +112,11 @@ const updateAgentVoiceHandler = require('./api/update-agent-voice.js');
 // ===== HTTP サーバー =====
 const server = http.createServer(async (req, res) => {
   // /lily プレフィックスを除去（Caddy経由でも直接アクセスでも動く）
-  const rawUrl = req.url.split('?')[0];
-  const url = rawUrl.startsWith('/lily') ? rawUrl.slice(5) || '/' : rawUrl;
+  const rawUrl = req.url; // クエリストリングを保持
+  const rawPath = rawUrl.split('?')[0];
+  const qs = rawUrl.includes('?') ? rawUrl.slice(rawUrl.indexOf('?')) : '';
+  const cleanPath = rawPath.startsWith('/lily') ? rawPath.slice(5) || '/' : rawPath;
+  const url = cleanPath + qs; // パス＋クエリを結合
   const method = req.method.toUpperCase();
 
   console.log(`[${method}] ${url}`);
