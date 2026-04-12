@@ -146,7 +146,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET /api/sessions =====
-  if (method === 'GET' && url === '/api/sessions') {
+  if (method === 'GET' && url.startsWith('/api/sessions')) {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await sessionsHandler(req2, wrapped);
@@ -154,7 +154,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET|POST /api/schedule =====
-  if (url === '/api/schedule') {
+  if (url.startsWith('/api/schedule')) {
     const body = method === 'POST' ? await readBody(req) : {};
     const req2 = Object.assign(req, { method, body });
     const wrapped = makeResWrapper(res);
@@ -176,7 +176,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET /api/config =====
-  if (method === 'GET' && url === '/api/config') {
+  if (method === 'GET' && url.startsWith('/api/config')) {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await configHandler(req2, wrapped);
@@ -184,7 +184,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET /api/signed-url =====
-  if (method === 'GET' && url === '/api/signed-url') {
+  if (method === 'GET' && url.startsWith('/api/signed-url')) {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await signedUrlHandler(req2, wrapped);
@@ -245,7 +245,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET|POST /api/call-now =====
-  if (url === '/api/call-now') {
+  if (url.startsWith('/api/call-now')) {
     const body = method === 'POST' ? await readBody(req) : {};
     const req2 = Object.assign(req, { method, body });
     const wrapped = makeResWrapper(res);
@@ -254,7 +254,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== GET /api/memory =====
-  if (method === 'GET' && url === '/api/memory') {
+  if (method === 'GET' && url.startsWith('/api/memory')) {
     const wrapped = makeResWrapper(res);
     const req2 = Object.assign(req, { method: 'GET', body: {} });
     await memoryHandler(req2, wrapped);
@@ -262,7 +262,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // ===== POST /api/analyze =====
-  if (method === 'POST' && url === '/api/analyze') {
+  if (method === 'POST' && url.startsWith('/api/analyze')) {
     const body = await readBody(req);
     const req2 = Object.assign(req, { method: 'POST', body });
     const wrapped = makeResWrapper(res);
