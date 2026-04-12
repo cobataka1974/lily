@@ -1038,6 +1038,26 @@
   // ===== ユーザー管理 =====
   var editingUserId = null;
 
+  function copyToClipboard(text, btn) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = '✅ コピー済み';
+        btn.style.background = '#d0f0d0';
+        setTimeout(function() { btn.textContent = orig; btn.style.background = '#f0e4d8'; }, 2000);
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✅ コピー済み';
+      setTimeout(function() { btn.textContent = '📋 コピー'; }, 2000);
+    }
+  }
+
   async function loadUsers() {
     try {
       var res = await fetch('/lily/api/user-config?action=users');
@@ -1057,11 +1077,17 @@
     }
     el.innerHTML = users.map(function(u) {
       var url = 'https://bvjozroi.gensparkclaw.com/lily/?id=' + encodeURIComponent(u.userId);
+      var dashUrl = 'https://bvjozroi.gensparkclaw.com/lily/dashboard?id=' + encodeURIComponent(u.userId);
+      var voiceLabel = (u.voiceId && u.voiceId !== '2JoPnaUSkgU9bMhXXOUP' && u.voiceId !== '9BWtsMINqrJLrRacOk9x' && u.voiceId !== 'JBFqnCBsd6RMkjVDRZzb')
+        ? '✅ 声クローン登録済み' : '🎵 デフォルト声';
       return '<div class="user-item">'
         + '<div class="user-info">'
         + '<div class="user-name">' + (u.name || u.userId) + 'さん</div>'
-        + '<div class="user-id">ID: ' + u.userId + '</div>'
-        + '<div class="user-url">🔗 <a href="' + url + '" target="_blank">' + url + '</a></div>'
+        + '<div class="user-id">ID: ' + u.userId + ' ｜ ' + voiceLabel + '</div>'
+        + '<div class="user-url" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;">'
+        + '🔗 <a href="' + url + '" target="_blank" style="font-size:11px;word-break:break-all;">' + url + '</a>'
+        + '<button onclick="copyToClipboard(\'' + url + '\', this)" style="padding:4px 10px;font-size:11px;background:#f0e4d8;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0;">📋 コピー</button>'
+        + '</div>'
         + '</div>'
         + '<button class="user-edit-btn" onclick="openUserModal(\'' + u.userId + '\')">編集</button>'
         + '</div>';

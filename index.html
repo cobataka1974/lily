@@ -287,6 +287,10 @@
     var lastTriggeredKey = '';
     var ssTimer = null;
     var petals = [];
+    // 声クローン自動収録
+    var voiceRecordingSessionId = null;
+    var voiceMediaRecorder = null;
+    var voiceRecordingChunks = [];
     // URLパラメータ ?id= からユーザーIDを取得
     var userId = new URLSearchParams(window.location.search).get('id') || 'default';
     var agentId = 'agent_2901kk4fbdaaeevsakrmknmp7jz4';  // ElevenLabs Agent ID（デフォルト）
@@ -739,8 +743,8 @@
             },
             tts: {
               voiceId: userVoiceId,  // ユーザーごとの声
-              stability: 0.21,
-              similarityBoost: 0.88,
+              stability: 0.65,
+              similarityBoost: 0.9,
               speed: 0.8,
             },
           },
@@ -753,6 +757,8 @@
               console.log('[connect] props:', JSON.stringify(props));
               console.log('[connect] conversationId:', currentConversationId);
             }
+            // 声クローン未登録ならバックグラウンド録音開始
+            startVoiceCapture();
           },
           onDisconnect: function(reason) {
             console.log('[onDisconnect] Reason:', reason);
@@ -765,6 +771,9 @@
 
             // バックエンドへ会話分析をリクエスト
             postAnalyze(endedConversationId);
+
+            // 声クローン録音を終了・送信
+            stopVoiceCapture();
 
             // 会話終了後2分でスクリーンセーバー起動
             setTimeout(function() {
@@ -793,6 +802,80 @@
           statusEl.textContent = 'マイクが見つかりません';
         }
       }
+    }
+
+    // ===== 声クローン自動収録 =====
+    // 声クローン未登録ユーザーの会話中にバックグラウンドでマイク音声を録音
+    // 十分な音声が溜まったら会話終了時にAPIへ送信してクローン作成
+    var DEFAULT_VOICE_IDS = ['2JoPnaUSkgU9bMhXXOUP', '9BWtsMINqrJLrRacOk9x', 'JBFqnCBsd6RMkjVDRZzb'];
+
+    async function startVoiceCapture() {
+      // 声クローン登録済みならスキップ
+      if (!DEFAULT_VOICE_IDS.includes(userVoiceId)) {
+        console.log('[voice-capture] 声クローン登録済みのためスキップ');
+        return;
+      }
+      try {
+        // セッション開始
+        var res = await fetch('/lily/api/record-voice/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: userId, aiName: userDisplayName }),
+        });
+        var data = await res.json();
+        if (data.status !== 'ok') return;
+        voiceRecordingSessionId = data.sessionId;
+
+        // マイクストリームを取得して録音開始
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        voiceRecordingChunks = [];
+        voiceMediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        voiceMediaRecorder.ondataavailable = async function(e) {
+          if (e.data.size > 0 && voiceRecordingSessionId) {
+            // チャンクをサーバーへ送信
+            try {
+              await fetch('/lily/api/record-voice/chunk?sessionId=' + voiceRecordingSessionId, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/octet-stream' },
+                body: e.data,
+              });
+            } catch(err) { console.warn('[voice-capture] chunk送信失敗:', err.message); }
+          }
+        };
+        voiceMediaRecorder.start(5000); // 5秒ごとにチャンク送信
+        console.log('[voice-capture] 録音開始 sessionId:', voiceRecordingSessionId);
+      } catch(e) {
+        console.warn('[voice-capture] 録音開始失敗:', e.message);
+        voiceRecordingSessionId = null;
+      }
+    }
+
+    async function stopVoiceCapture() {
+      if (!voiceRecordingSessionId) return;
+      try {
+        if (voiceMediaRecorder && voiceMediaRecorder.state !== 'inactive') {
+          voiceMediaRecorder.stop();
+          // ストリームのトラックを止める
+          voiceMediaRecorder.stream && voiceMediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        // サーバーへ終了を通知してクローン作成
+        var res = await fetch('/lily/api/record-voice/finish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: voiceRecordingSessionId }),
+        });
+        var data = await res.json();
+        if (data.status === 'ok' && data.voiceId) {
+          console.log('[voice-capture] クローン完成! voiceId:', data.voiceId);
+          userVoiceId = data.voiceId; // 次回の会話から使用
+        } else {
+          console.log('[voice-capture] クローン未完成:', data.message);
+        }
+      } catch(e) {
+        console.warn('[voice-capture] 終了処理失敗:', e.message);
+      }
+      voiceRecordingSessionId = null;
+      voiceMediaRecorder = null;
     }
 
     async function stopConversation() {
