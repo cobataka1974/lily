@@ -749,8 +749,9 @@
             log('接続しました ✅');
             setBtn('talking');
             // conversationId を取得して保持
-            if (props && props.conversationId) {
-              currentConversationId = props.conversationId;
+            if (props) {
+              currentConversationId = props.conversationId || props.conversation_id || null;
+              console.log('[connect] props:', JSON.stringify(props));
               console.log('[connect] conversationId:', currentConversationId);
             }
           },
